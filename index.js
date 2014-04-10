@@ -18,13 +18,15 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(_.first(docs, 1));
+		return downloadSchedules(_.first(docs, 5));
 	});
+/*}).then(function (docs) {
+	console.log(JSON.stringify(_.first(docs, 1), null, '\t'));*/
 }).then(function () {
-	console.log('\nSetting schedule relations...');
+	/*console.log('\nSetting schedule relations...');
 	return adapter.setScheduleRelations(model.schedules);
 }).then(function () {
-	console.log('Set schedule relations!');
+	console.log('Set schedule relations!');*/
 
 	adapter.close();
 });
@@ -91,3 +93,4 @@ function downloadSchedules (items) {
 // using downloadSchedules RECYCLES the students. by dellin' them.
 // if rooster reverted, it wont update.
 // intranet TIMEOUT = 10min.
+// UNITE updateQuery() method. Create top level model.

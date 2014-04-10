@@ -11,21 +11,25 @@ app.get('/', function(req, res) {
 	res.send('Welcome to the schedules express rest api!');
 });
 
-function setupCollection (collection) {
+function setupCollection (collection, plural) {
 	console.log('Loading', collection);
 	adapter.loadCollection(collection).then(function (count) {
 		console.log('Loaded %d %s', count, collection);
 	});
 
-	app.get('/' + collection, function (req, res) {
+	app.get('/' + plural + 's', function (req, res) {
 		adapter.findAll(collection).then(function (docs) {
-			res.json(docs.map(modifyArrays));
+			var root = {};
+			root[plural + 's'] = docs.map(modifyArrays);
+			res.json(root);
 		});
 	});
 
-	app.get('/' + collection + '/:id', function (req, res) {
+	app.get('/' + plural + 's' + '/:id', function (req, res) {
 		adapter.findOne(collection, Number(req.params.id)).then(function (doc) {
-			res.json(modifyArrays(doc));
+			var root = {};
+			root[plural] = modifyArrays(doc);
+			res.json(root);
 		});
 	});
 }
@@ -36,8 +40,8 @@ function modifyArrays (doc) {
 	});
 }
 
-setupCollection('students');
-setupCollection('students_schedules');
+setupCollection('students', 'student');
+setupCollection('students_schedules', 'studentSchedule');
 
 
 app.listen(port, ip, function () {

@@ -21,9 +21,10 @@ handleCollection(model.items, function () {
 		return downloadSchedules(_.first(docs, 5));
 	});
 /*}).then(function (docs) {
-	console.log(JSON.stringify(_.first(docs, 1), null, '\t'));*/
+	console.log(JSON.stringify(_.first(docs, 1), null, '\t'));
+	return docs;*/
 }).then(function () {
-	/*console.log('\nSetting schedule relations...');
+/*	console.log('\nSetting schedule relations...');
 	return adapter.setScheduleRelations(model.schedules);
 }).then(function () {
 	console.log('Set schedule relations!');*/
@@ -94,3 +95,4 @@ function downloadSchedules (items) {
 // if rooster reverted, it wont update.
 // intranet TIMEOUT = 10min.
 // UNITE updateQuery() method. Create top level model.
+// in authenticate(), Headers give us lastModified information. 

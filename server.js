@@ -21,6 +21,7 @@ function setupCollection (collection, plural) {
 		adapter.findAll(collection).then(function (docs) {
 			var root = {};
 			root[plural + 's'] = docs.map(modifyArrays);
+			res.setHeader('Access-Control-Allow-Origin', '*');
 			res.json(root);
 		});
 	});
@@ -29,6 +30,7 @@ function setupCollection (collection, plural) {
 		adapter.findOne(collection, Number(req.params.id)).then(function (doc) {
 			var root = {};
 			root[plural] = modifyArrays(doc);
+			res.setHeader('Access-Control-Allow-Origin', '*');
 			res.json(root);
 		});
 	});

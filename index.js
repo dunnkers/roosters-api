@@ -5,11 +5,10 @@ var format = require('util').format,
 	StudentIndexModel = require('./lib/models/student_index_model'),
 	TeacherIndexModel = require('./lib/models/teacher_index_model');
 
+var grab = false;
+
 var model = new StudentIndexModel();
 var controller = new IndexController(model);
-var name = model.items.name;
-
-var grab = true;
 
 handleCollection(model.items, function () {
 	return controller.authenticate().then(function (data) {
@@ -18,16 +17,13 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(_.first(docs, 1));
+		return downloadSchedules(_.first(docs, 10));
 	});
-/*}).then(function (docs) {
-	console.log(JSON.stringify(_.first(docs, 1), null, '\t'));
-	return docs;*/
 }).then(function () {
-/*	console.log('\nSetting schedule relations...');
+	console.log('\nSetting %s schedule relations...', model.items);
 	return adapter.setScheduleRelations(model.schedules);
 }).then(function () {
-	console.log('Set schedule relations!');*/
+	console.log('Set %s schedule relations!', model.items);
 
 	adapter.close();
 });
@@ -56,7 +52,8 @@ function handleCollection (name, download) {
 		console.log('Adding new %s...', name);
 		return adapter.addModels(name, models);
 	}).then(function (stats) {
-		console.log('Updated %d and inserted %d %s!\n', stats.updated, stats.inserted, name);
+		console.log('Updated %d and inserted %d %s!', stats.updated, stats.inserted, name);
+		// \n
 
 
 		/*console.log('Removing old %s...', name);

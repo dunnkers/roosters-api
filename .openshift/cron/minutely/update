@@ -1,7 +1,12 @@
 #!/bin/bash
 
 echo "`date +%u` this is the week!";
-if [`date +%u` == "5"]
+if ["`date +%u`" == "5"]
+then
+	echo "its friday!";
+fi
+echo "maybe like this; ";
+if [`date +%u` == 5]
 then
 	echo "its friday!";
 fi

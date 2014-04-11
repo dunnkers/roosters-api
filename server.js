@@ -1,3 +1,5 @@
+#!/bin/env node
+
 var express = require('express'),
 	app = express(),
 	adapter = require('./lib/mongodb_adapter'),

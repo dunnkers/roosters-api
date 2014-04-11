@@ -38,7 +38,7 @@ function setupCollection (collection, plural) {
 
 function modifyArrays (doc) {
 	return _.mapValues(doc, function (value) {
-		return _.isArray(value) ? value[value.length - 1] : value;
+		return _.isArray(value) ? _.first(value) : value;
 	});
 }
 

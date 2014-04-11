@@ -18,7 +18,7 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(_.first(docs, 5));
+		return downloadSchedules(_.first(docs, 1));
 	});
 /*}).then(function (docs) {
 	console.log(JSON.stringify(_.first(docs, 1), null, '\t'));
@@ -96,3 +96,5 @@ function downloadSchedules (items) {
 // intranet TIMEOUT = 10min.
 // UNITE updateQuery() method. Create top level model.
 // in authenticate(), Headers give us lastModified information. 
+
+// remember to pass your env. variables to openshift.

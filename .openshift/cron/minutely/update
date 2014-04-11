@@ -1,7 +1,0 @@
-#!/bin/bash
-
-echo "`date +%u` this is the week!";
-if [[ $(date +%u) -eq 5 ]]; then
-	echo "its friday!";
-fi
-/usr/bin/node $OPENSHIFT_REPO_DIR/testcron.js

@@ -17,7 +17,7 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(_.first(docs, 10));
+		return downloadSchedules(_.first(docs, 1));
 	});
 }).then(function () {
 	console.log('\nSetting %s schedule relations...', model.items);
@@ -52,7 +52,7 @@ function handleCollection (name, download) {
 		console.log('Adding new %s...', name);
 		return adapter.addModels(name, models);
 	}).then(function (stats) {
-		console.log('Updated %d and inserted %d %s!', stats.updated, stats.inserted, name);
+		console.log('Updated %d and inserted %d %s!', stats.updated || 0, stats.inserted || 0, name);
 		// \n
 
 
@@ -93,5 +93,4 @@ function downloadSchedules (items) {
 // intranet TIMEOUT = 10min.
 // UNITE updateQuery() method. Create top level model.
 // in authenticate(), Headers give us lastModified information. 
-
-// remember to pass your env. variables to openshift.
+// IF any PROBLEMS in setScheduleRelations might occur, store i and j vars before promise.

@@ -20,10 +20,10 @@ handleCollection(model.items, function () {
 		return downloadSchedules(_.first(docs, 1));
 	});
 }).then(function () {
-	console.log('\nSetting %s schedule relations...', model.items);
+	/*console.log('\nSetting %s schedule relations...', model.items);
 	return adapter.setScheduleRelations(model.schedules);
 }).then(function () {
-	console.log('Set %s schedule relations!', model.items);
+	console.log('Set %s schedule relations!', model.items);*/
 
 	adapter.close();
 });

@@ -17,7 +17,7 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(_.first(docs, 10));
+		return downloadSchedules(_.first(docs, 1));
 	});
 }).then(function () {
 	adapter.close();
@@ -86,6 +86,4 @@ function downloadSchedules (items) {
 // using downloadSchedules RECYCLES the students. by dellin' them.
 // if rooster reverted, it wont update.
 // intranet TIMEOUT = 10min.
-// UNITE updateQuery() method. Create top level model.
 // in authenticate(), Headers give us lastModified information. 
-// IF any PROBLEMS in setScheduleRelations might occur, store i and j vars before promise.

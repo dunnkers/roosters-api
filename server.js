@@ -12,7 +12,7 @@ var port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
 var model = new StudentIndexModel();
 
-app.all('/*', function (req, res, next) {
+app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	next();
 });

@@ -5,7 +5,7 @@ var format = require('util').format,
 	StudentIndexModel = require('./lib/models/student_index_model'),
 	TeacherIndexModel = require('./lib/models/teacher_index_model');
 
-var grab = false;
+var grab = true;
 
 var model = new StudentIndexModel();
 var controller = new IndexController(model);

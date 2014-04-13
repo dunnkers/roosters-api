@@ -4,53 +4,68 @@ var express = require('express'),
 	app = express(),
 	adapter = require('./lib/mongodb_adapter'),
 	RSVP = require('rsvp'),
-	_ = require('lodash');
+	_ = require('lodash'),
+	StudentIndexModel = require('./lib/models/student_index_model');
 
 var ip = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1";
 var port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+
+var model = new StudentIndexModel();
+
+app.all('/*', function (req, res, next) {
+	res.header("Access-Control-Allow-Origin", "*");
+	next();
+});
 
 app.get('/', function(req, res) {
 	res.send('Roosters!');
 });
 
-setupCollection('students', 'student');
-setupCollection('students_schedules', 'studentSchedule');
-
-function setupCollection (collection, plural) {
-	console.log('Loading', collection);
-	adapter.loadCollection(collection).then(function (count) {
-		console.log('Loaded %d %s', count, collection);
+configure(model.items, model.item).then(function () {
+	return configure(model.schedules, model.schedule, function (docs) {
+		return _.isArray(docs) ? 
+			adapter.resolveScheduleRelations(model.schedules, docs) : 
+			adapter.resolveScheduleRelation(model.schedules, docs);
 	});
-	var pluralized = plural + 's';
+}).then(function () {
+	app.listen(port, ip, function () {
+		console.log('Listening on %s:%d ...', ip, port);
+	});
+});
 
-	app.get('/' + pluralized, function (req, res) {
-		adapter.findAll(collection).then(function (docs) {
-			var root = {};
-			root[pluralized] = docs.map(modifyArrays);
-			res.setHeader('Access-Control-Allow-Origin', '*');
-			res.json(root);
+function configure (name, singular, transform) {
+	console.log("Loading %s...", name);
+	return adapter.loadCollection(name).then(function (count) {
+		console.log('Loaded %d %s!\n', count, name);
+		return count;
+	}).then(function () {
+		
+		app.get('/' + name, function (req, res) {
+			var ids = req.query.ids;
+			ids = (_.isString(ids) ? ids.split(',') : ids || []).map(function (id) {
+				return Number(id) || id;
+			});
+			var query = ids.length ? {_id: {$in: ids}} : {};
+
+			adapter.find(name, query).then(transform || function (docs) {
+				return docs;
+			}).then(function (docs) {
+				var root = {};
+				root[name] = docs.map(modifyArrays);
+				res.json(root);
+			});
 		});
-	});
 
-	app.get('/' + pluralized + '/:id', function (req, res) {
-
-		if (collection === 'students_schedules') {
-			adapter.findOne(collection, Number(req.params.id)).then(function (doc) {
-				return adapter.resolveScheduleRelation(collection, doc);
+		app.get('/' + name + '/:id', function (req, res) {
+			adapter.findOne(name, Number(req.params.id)).then(transform || function (doc) {
+				return doc;
 			}).then(function (doc) {
 				var root = {};
-				root[plural] = modifyArrays(doc);
-				res.setHeader('Access-Control-Allow-Origin', '*');
+				root[singular] = modifyArrays(doc);
 				res.json(root);
 			});
-		}else {
-			adapter.findOne(collection, Number(req.params.id)).then(function (doc) {
-				var root = {};
-				root[plural] = modifyArrays(doc);
-				res.setHeader('Access-Control-Allow-Origin', '*');
-				res.json(root);
-			});
-		}
+		});
+		return;
 	});
 }
 
@@ -59,33 +74,3 @@ function modifyArrays (doc) {
 		return _.isArray(value) ? _.first(value) : value;
 	});
 }
-
-
-app.listen(port, ip, function () {
-	console.log('Listening on %s:%d ...', ip, port);
-});
-
-
-
-// handle errors.
-// incorrect findall response object
-
-
-// To complete full ember.js support;
-// SUPPORT side-loaded http relationships. @see ember guide
-/*	console.log('Looking for all students');
-	var query = {};
-	var ids = req.query.ids;
-	if (ids) {
-		// Fortune.js also supports this, also type == array
-		if (typeof ids === 'string') {
-			ids = ids.split(',');
-			// -> USE Number(); here, then pass {unique: ids} as a query.
-		}
-		// Ember.js sends an object a request
-		var selectors = [];
-		for (var i in ids) {
-			selectors.push({unique: Number(ids[i])});
-		}
-		query = {$or: selectors};
-	}*/

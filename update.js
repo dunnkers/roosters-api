@@ -17,12 +17,14 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(_.first(docs, 10));
+		return downloadSchedules(_.first(docs, 5));
 	});
 }).then(function () {
 	console.log('\nSetting %s schedule relations...', model.items);
+	console.time('\nResolve schedules ' + model.items);
 	return adapter.setScheduleRelations(model.schedules);
 }).then(function (results) {
+	console.timeEnd('\nResolve schedules ' + model.items);
 	console.log('Set %d %s schedule relations!', results.length, model.items);
 
 	adapter.close();
@@ -39,11 +41,11 @@ function handleCollection (name, download) {
 		console.log('%s %s!\n', action, name);
 
 		console.log('Downloading %s...', name);
-		console.time('Download ' + name);
+		console.time('\nDownload ' + name);
 	}).then(grab ? download : function () {
 		return [];
 	}).then(function (models) {
-		console.timeEnd('Download ' + name);
+		console.timeEnd('\nDownload ' + name);
 		console.log('Downloaded %d %s!\n', models.length, name);
 
 
@@ -81,6 +83,8 @@ function downloadSchedules (items) {
 				schedules.push(schedule);
 			}
 			return items.length ? recurse() : schedules;
+		}, function (error) {
+			console.error('Failed to download schedule for ' + item._id + '\n' + error);
 		});
 	}
 

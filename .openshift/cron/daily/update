@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ $(date +%u) -eq 5 ]]; then
+if [[ $(date +%u) -eq 6 ]]; then
 	echo "`date +%A`. Updating...";
 	/usr/bin/node $OPENSHIFT_REPO_DIR/update.js
 else

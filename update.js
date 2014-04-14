@@ -17,15 +17,29 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(_.first(docs, 1));
+		return downloadSchedules(docs[703]);
 	});
 }).then(function (docs) {
+
 	console.log('\nSetting %s schedule relations...', model.items);
 	console.time('\nResolve schedules ' + model.items);
-	return adapter.setScheduleRelations(model.schedules);
+	return adapter.loadCollection(model.scheduleRelations);
+}).then(function (count) {
+	return adapter.remove(model.scheduleRelations, {});
+}).then(function () {
+	return adapter.findOne(model.schedules);
+}).then(function (doc) {
+	return adapter.resolveSchedule(model.schedules, doc).then(function (doc) {
+		adapter.insert(model.scheduleRelations, { relations: doc.timetable });
+	});
+}).then(function () {
+	console.timeEnd('\nResolve schedules ' + model.items);
+	console.log('Set %s schedule relations!', model.items);
+
+	/*return adapter.setScheduleRelations(model.schedules);
 }).then(function (results) {
 	console.timeEnd('\nResolve schedules ' + model.items);
-	console.log('Set %d %s schedule relations!', results.length, model.items);
+	console.log('Set %d %s schedule relations!', results.length, model.items);*/
 
 	adapter.close();
 });

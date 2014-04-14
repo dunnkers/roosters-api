@@ -17,9 +17,14 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(docs);
+		return downloadSchedules(_.first(docs, 1));
 	});
 }).then(function () {
+	console.log('\nSetting %s schedule relations...', model.items);
+	return adapter.setScheduleRelations(model.schedules);
+}).then(function (results) {
+	console.log('Set %d %s schedule relations!', results.length, model.items);
+
 	adapter.close();
 });
 
@@ -87,3 +92,7 @@ function downloadSchedules (items) {
 // if rooster reverted, it wont update.
 // intranet TIMEOUT = 10min.
 // in authenticate(), Headers give us lastModified information. 
+
+// hour can be undefined in IndexController ln. 60
+
+// don't download EVERYTHING first, modularly download, then add; less error prone.

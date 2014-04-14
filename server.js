@@ -22,19 +22,9 @@ app.get('/', function(req, res) {
 	res.send('Roosters!');
 });
 
-
-
 configure(model.items, model.item, model.Item).then(function () {
 	return configure(model.schedules, model.schedule, Schedule);
 }).then(function () {
-
-	console.log('\nSetting %s schedule relations...', model.items);
-	console.time('\nResolve schedules ' + model.items);
-	return adapter.setScheduleRelations(model.schedules);
-}).then(function (results) {
-	console.timeEnd('\nResolve schedules ' + model.items);
-	console.log('Set %d %s schedule relations!\n', results.length, model.items);
-
 	app.listen(port, ip, function () {
 		console.log('Listening on %s:%d ...', ip, port);
 	});

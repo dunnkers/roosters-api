@@ -5,7 +5,7 @@ var format = require('util').format,
 	StudentIndexModel = require('./lib/models/student_index_model'),
 	TeacherIndexModel = require('./lib/models/teacher_index_model');
 
-var grab = true;
+var grab = false;
 
 var model = new StudentIndexModel();
 var controller = new IndexController(model);
@@ -17,7 +17,7 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(_.first(docs, 1));
+		return downloadSchedules(_.first(docs, 10));
 	});
 }).then(function () {
 	console.log('\nSetting %s schedule relations...', model.items);

@@ -5,7 +5,8 @@ var express = require('express'),
 	adapter = require('./lib/mongodb_adapter'),
 	RSVP = require('rsvp'),
 	_ = require('lodash'),
-	StudentIndexModel = require('./lib/models/student_index_model');
+	StudentIndexModel = require('./lib/models/student_index_model'),
+	Schedule = require('./lib/models/schedule_model');
 
 var ip = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1";
 var port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
@@ -21,19 +22,15 @@ app.get('/', function(req, res) {
 	res.send('Roosters!');
 });
 
-configure(model.items, model.item).then(function () {
-	return configure(model.schedules, model.schedule, function (docs) {
-		return _.isArray(docs) ? 
-			adapter.resolveSchedules(model.schedules, docs) : 
-			adapter.resolveSchedule(model.schedules, docs);
-	});
+configure(model.items, model.item, model.Item).then(function () {
+	return configure(model.schedules, model.schedule, Schedule);
 }).then(function () {
 	app.listen(port, ip, function () {
 		console.log('Listening on %s:%d ...', ip, port);
 	});
 });
 
-function configure (name, singular, transform) {
+function configure (name, singular, docModel) {
 	console.log("Loading %s...", name);
 	return adapter.loadCollection(name).then(function (count) {
 		console.log('Loaded %d %s!\n', count, name);
@@ -47,21 +44,19 @@ function configure (name, singular, transform) {
 			});
 			var query = ids.length ? {_id: {$in: ids}} : {};
 
-			adapter.find(name, query).then(transform || function (docs) {
-				return docs;
-			}).then(function (docs) {
+			adapter.find(name, query).then(function (docs) {
 				var root = {};
-				root[name] = docs.map(modify);
+				root[name] = docs.map(function (doc) {
+					return modify(doc, docModel);
+				});
 				res.json(root);
 			});
 		});
 
 		app.get('/' + name + '/:id', function (req, res) {
-			adapter.findOne(name, Number(req.params.id)).then(transform || function (doc) {
-				return doc;
-			}).then(function (doc) {
+			adapter.findOne(name, Number(req.params.id)).then(function (doc) {
 				var root = {};
-				root[singular] = modify(doc);
+				root[singular] = modify(doc, docModel);
 				res.json(root);
 			});
 		});
@@ -69,10 +64,14 @@ function configure (name, singular, transform) {
 	});
 }
 
-function modify (doc) {
+function modify (doc, docModel) {
 	// break arrays
-	var modified = _.mapValues(doc, function (value) {
-		return _.isArray(value) ? _.first(value) : value;
+	var modified = _.mapValues(doc, function (value, key) {
+		var arr = docModel.addToSet ? _.transform(docModel.addToSet, function (result, value) {
+			result.push(value + 'Modified');
+			return result.push(value);
+		}) : [];
+		return arr.indexOf(key) > -1 ? _.first(value) : value;
 	});
 	modified.id = modified._id;
 	delete modified._id;

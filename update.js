@@ -36,11 +36,6 @@ handleCollection(model.items, function () {
 	console.timeEnd('\nResolve schedules ' + model.items);
 	console.log('Set %s schedule relations!', model.items);
 
-	/*return adapter.setScheduleRelations(model.schedules);
-}).then(function (results) {
-	console.timeEnd('\nResolve schedules ' + model.items);
-	console.log('Set %d %s schedule relations!', results.length, model.items);*/
-
 	adapter.close();
 });
 

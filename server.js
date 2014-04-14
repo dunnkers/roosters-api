@@ -24,8 +24,8 @@ app.get('/', function(req, res) {
 configure(model.items, model.item).then(function () {
 	return configure(model.schedules, model.schedule, function (docs) {
 		return _.isArray(docs) ? 
-			adapter.resolveScheduleRelations(model.schedules, docs) : 
-			adapter.resolveScheduleRelation(model.schedules, docs);
+			adapter.resolveSchedules(model.schedules, docs) : 
+			adapter.resolveSchedule(model.schedules, docs);
 	});
 }).then(function () {
 	app.listen(port, ip, function () {
@@ -51,7 +51,7 @@ function configure (name, singular, transform) {
 				return docs;
 			}).then(function (docs) {
 				var root = {};
-				root[name] = docs.map(modifyArrays);
+				root[name] = docs.map(modify);
 				res.json(root);
 			});
 		});
@@ -61,7 +61,7 @@ function configure (name, singular, transform) {
 				return doc;
 			}).then(function (doc) {
 				var root = {};
-				root[singular] = modifyArrays(doc);
+				root[singular] = modify(doc);
 				res.json(root);
 			});
 		});
@@ -69,8 +69,12 @@ function configure (name, singular, transform) {
 	});
 }
 
-function modifyArrays (doc) {
-	return _.mapValues(doc, function (value) {
+function modify (doc) {
+	// break arrays
+	var modified = _.mapValues(doc, function (value) {
 		return _.isArray(value) ? _.first(value) : value;
 	});
+	modified.id = modified._id;
+	delete modified._id;
+	return modified;
 }

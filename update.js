@@ -28,8 +28,8 @@ handleCollection(model.items, function () {
 	});
 }).then(function () {
 	return adapter.findOne(model.schedules).then(function (doc) {
-		return adapter.resolveSchedule(model.schedules, doc).then(function (doc) {
-			return adapter.insert(model.scheduleRelations, { relations: doc.timetable });
+		return adapter.resolveSchedule(model.schedules, _.first(doc.timetable)).then(function (doc) {
+			return adapter.insert(model.scheduleRelations, { relations: doc });
 		});
 	});
 }).then(function () {

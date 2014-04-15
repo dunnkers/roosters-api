@@ -7,6 +7,7 @@ var format = require('util').format,
 	RSVP = require('rsvp');
 
 var app = process.env.OPENSHIFT_APP_NAME;
+var grab = process.argv[2];
 
 var model = new StudentIndexModel(),
 	controller = new IndexController(model);
@@ -50,7 +51,9 @@ function handleCollection (name, download, items) {
 
 		console.log('Downloading %s...', name);
 		console.time('Download ' + name);
-	}).then(download).then(function (models) {
+	}).then(grab === '--nograb' ? function () {
+		return [];
+	} : download).then(function (models) {
 		console.timeEnd('Download ' + name);
 		console.log('Downloaded %d %s!\n', models.length, name);
 		localModels = models;

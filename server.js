@@ -1,15 +1,13 @@
 #!/bin/env node
 
-var express = require('express'),
-	app = express(),
+var app = require('express')(),
 	adapter = require('./lib/mongodb_adapter'),
 	RSVP = require('rsvp'),
 	_ = require('lodash'),
-	StudentIndexModel = require('./lib/models/student_index_model'),
-	Schedule = require('./lib/models/schedule_model');
+	StudentIndexModel = require('./lib/models/student_index_model');
 
-var ip = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1";
-var port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+var ip = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1",
+	port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
 var model = new StudentIndexModel();
 
@@ -23,20 +21,20 @@ app.get('/', function(req, res) {
 });
 
 configure(model.items, model.item, model.Item).then(function () {
-	return configure(model.schedules, model.schedule, Schedule);
+	return configure(model.schedules, model.schedule, model.Schedule);
 }).then(function () {
-	return adapter.loadCollection(model.scheduleRelations);
-}).then(function () {
-	app.get('/' + model.scheduleRelations, function (req, res) {
-		adapter.findOne(model.scheduleRelations).then(function (doc) {
-			delete doc._id;
-			res.json(doc);
-		}, function (error) {
-			console.error('oops!', error);
-			res.send(404);
+	return adapter.loadCollection(model.scheduleRelations).then(function () {
+		app.get('/' + model.scheduleRelations, function (req, res) {
+			adapter.findOne(model.scheduleRelations).then(function (doc) {
+				delete doc._id;
+				res.json(doc);
+			}, function (error) {
+				console.error('oops!', error);
+				res.send(404);
+			});
 		});
 	});
-
+}).then(function () {
 	app.listen(port, ip, function () {
 		console.log('Listening on %s:%d ...', ip, port);
 	});
@@ -48,8 +46,6 @@ function configure (name, singular, docModel) {
 	console.log("Loading %s...", name);
 	return adapter.loadCollection(name).then(function (count) {
 		console.log('Loaded %d %s!\n', count, name);
-		return count;
-	}).then(function () {
 		
 		app.get('/' + name, function (req, res) {
 			var ids = req.query.ids;
@@ -72,6 +68,9 @@ function configure (name, singular, docModel) {
 
 		app.get('/' + name + '/:id', function (req, res) {
 			adapter.findOne(name, Number(req.params.id)).then(function (doc) {
+				if (!doc) {
+					res.send(404);
+				}
 				var root = {};
 				root[singular] = modify(doc, docModel);
 				res.json(root);
@@ -84,7 +83,6 @@ function configure (name, singular, docModel) {
 }
 
 function modify (doc, docModel) {
-	// break arrays
 	var modified = _.mapValues(doc, function (value, key) {
 		var arr = docModel.addToSet ? _.transform(docModel.addToSet, function (result, value) {
 			result.push(value + 'Modified');

@@ -25,9 +25,23 @@ app.get('/', function(req, res) {
 configure(model.items, model.item, model.Item).then(function () {
 	return configure(model.schedules, model.schedule, Schedule);
 }).then(function () {
+	return adapter.loadCollection(model.scheduleRelations);
+}).then(function () {
+	app.get('/' + model.scheduleRelations, function (req, res) {
+		adapter.findOne(model.scheduleRelations).then(function (doc) {
+			delete doc._id;
+			res.json(doc);
+		}, function (error) {
+			console.error('oops!', error);
+			res.send(404);
+		});
+	});
+
 	app.listen(port, ip, function () {
 		console.log('Listening on %s:%d ...', ip, port);
 	});
+}, function (error) {
+	console.error('oops!', error);
 });
 
 function configure (name, singular, docModel) {
@@ -50,6 +64,9 @@ function configure (name, singular, docModel) {
 					return modify(doc, docModel);
 				});
 				res.json(root);
+			}, function (error) {
+				console.error('oops!', error);
+				res.send(404);
 			});
 		});
 
@@ -58,9 +75,11 @@ function configure (name, singular, docModel) {
 				var root = {};
 				root[singular] = modify(doc, docModel);
 				res.json(root);
+			}, function (error) {
+				console.error('oops!', error);
+				res.send(404);
 			});
 		});
-		return;
 	});
 }
 

@@ -17,7 +17,7 @@ handleCollection(model.items, function () {
 }).then(function (docs) {
 	console.log('');
 	return handleCollection(model.schedules, function () {
-		return downloadSchedules(docs[703]);
+		return downloadSchedules(_.first(docs, 1));
 	});
 }).then(function (docs) {
 

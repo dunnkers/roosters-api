@@ -22,7 +22,6 @@ handleCollection(model.items, function () {
 		return controller.downloadSchedules(app ? docs : _.first(docs, 1));
 	}, docs);
 }).then(function () {
-
 	console.log('\nSetting %s schedule relations...', model.items);
 	return adapter.loadCollection(model.scheduleRelations).then(function () {
 		return adapter.remove(model.scheduleRelations, {});

@@ -1,6 +1,7 @@
 #!/bin/env node
 
-var app = require('express')(),
+var express= require('express'),
+	app = express(),
 	adapter = require('./lib/mongodb_adapter'),
 	RSVP = require('rsvp'),
 	_ = require('lodash'),
@@ -15,6 +16,8 @@ app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	next();
 });
+
+app.set('json spaces', 0);
 
 app.get('/', function(req, res) {
 	res.send('Roosters!');

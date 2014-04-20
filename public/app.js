@@ -2,7 +2,7 @@ App = Ember.Application.create();
 
 App.Router.map(function() {
 	this.resource('studentSchedule', {path: ':id'}, function() {
-		this.resource('hour', {path: ':dayIndex/:hourIndex'});
+		this.resource('hour', {path: ':dag/:uur'});
 	});
 });
 
@@ -30,7 +30,7 @@ App.StudentSchedule = DS.Model.extend({
 App.StudentScheduleController = Ember.ObjectController.extend({
 	actions: {
 		between: function (i, j) {
-			this.transitionToRoute('hour', i, j);
+			this.transitionToRoute('hour', Ember.dagen[i], Ember.uren[j]);
 		}
 	}
 });
@@ -62,8 +62,6 @@ App.TimetableTransform = DS.Transform.extend({
 });
 
 App.ApplicationController = Ember.ArrayController.extend({
-	queryParams: ['query'],
-	query: null,
 	searchValue: '',
 	actions: {
 		search: function () {
@@ -87,6 +85,9 @@ App.ApplicationController = Ember.ArrayController.extend({
 
 App.ApplicationRoute = Ember.Route.extend({
 	init: function () {
+		Ember.dagen = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag'];
+		Ember.uren = ['1e', '2e', '3e', '4e', '5e', '6e', '7e', '8e'];
+
 		Ember.engine = new Bloodhound({
 			datumTokenizer: Bloodhound.tokenizers.obj.whitespace('unique'),
 			queryTokenizer: Bloodhound.tokenizers.whitespace,
@@ -126,6 +127,7 @@ App.ApplicationView = Ember.View.extend({
 
 App.StudentScheduleRoute = Ember.Route.extend({
 	init: function () {
+		//https://api-roosters.rhcloud.com
 		$.getJSON('/studentScheduleRelations').then(function (data) {
 			Ember.studentScheduleRelations = data.relations;
 		});
@@ -151,12 +153,22 @@ App.HourRoute = Ember.Route.extend({
 		if (!(relations && relations.length)) {
 			return error();
 		}
-		var day = relations[params.dayIndex];
+		var dayIndex = Ember.dagen.indexOf(params.dag);
+		if (dayIndex == -1) {
+			return error();
+		}
+		var day = relations[dayIndex];
 		if (!(day && day.length)) {
 			return error();
 		}
-		var hour = day[params.hourIndex];
-		var unique = this.modelFor('studentSchedule').student.id;
+		var hourIndex = Ember.uren.indexOf(params.uur);
+		if (hourIndex == -1) {
+			return error();
+		}
+		var hour = day[hourIndex];
+		var thisStudent = this.modelFor('studentSchedule').student;
+		var unique = thisStudent.id;
+		var jaarlaag = thisStudent.get('jaarlaag');
 		var ids = _.without(hour, Number(unique) || unique);
 		if (!ids.length) {
 			return error();
@@ -188,7 +200,8 @@ App.HourRoute = Ember.Route.extend({
 				'jaarlaag_id': '#' + key,
 				'jaarlaag_klassen': key + 'klassen',
 				'jaarlaag_klassen_id': '#' + key + 'klassen',
-				'klassen': klasFiltered
+				'klassen': klasFiltered,
+				'eigen_jaarlaag': jaarlaag === key ? true : false
 			});
 		});
 		filtered = _.sortBy(filtered, function (filter) {

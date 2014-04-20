@@ -126,8 +126,7 @@ App.ApplicationView = Ember.View.extend({
 
 App.StudentScheduleRoute = Ember.Route.extend({
 	init: function () {
-		//
-		$.getJSON('https://api-roosters.rhcloud.com/studentScheduleRelations').then(function (data) {
+		$.getJSON('/studentScheduleRelations').then(function (data) {
 			Ember.studentScheduleRelations = data.relations;
 		});
 	},

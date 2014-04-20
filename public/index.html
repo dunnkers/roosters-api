@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Roosters</title>
+	<link rel="stylesheet" href="/vendor/combined.css">
+	<link rel="stylesheet" href="/style.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+	<script type="text/x-handlebars">
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12 col-sm-5 col-sm-offset-3">
+					<div id="bloodhound">
+						{{input class="typeahead" placeholder="Zoek..." action="search" value=searchValue type="search"}}
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				{{outlet}}
+			</div>
+		</div>
+	</script>
+	<script type="text/x-handlebars" data-template-name="studentSchedule">
+		<div class="col-xs-12 col-sm-9 col-sm-push-3">
+		<table class="rooster">
+			<thead><h2>{{student.titel}}</h2></thead>
+			<tr>
+				<th>Uur\ Dag</th>
+				<th>maandag</th>
+				<th>dinsdag</th>
+				<th>woensdag</th>
+				<th>donderdag</th>
+				<th>vrijdag</th>
+			</tr>
+			{{#each day in schedule.timetable}}
+			<tr>
+				{{#each day}}
+					{{#if uur}}
+						<th>{{uur}}</th>
+					{{else}}
+						{{#if between}}
+							<td {{bind-attr class="between:tussenuur"}}
+								{{action 'between' i j}}>tussen
+							</td>
+						{{else}}
+							<td {{bind-attr class="examen:examenuur"}}>
+							{{#if nested}}
+								<table><tbody>
+									{{#each nested}}
+										<tr><td>
+											{{#if examen}}
+												{{vak}}</br>
+												{{docent}}</br>
+												{{examen}}
+											{{else}}
+												{{vak}}</br>
+												{{docent}}</br>
+												{{lokaal}}
+											{{/if}}
+										</td></tr>
+									{{/each}}
+								</tbody></table>
+							{{else}}
+								{{#if examen}}
+									{{vak}}</br>
+									{{docent}}</br>
+									{{examen}}
+								{{else}}
+									{{vak}}</br>
+									{{docent}}</br>
+									{{lokaal}}
+								{{/if}}
+							{{/if}}
+							</td>
+						{{/if}}
+					{{/if}}
+				{{/each}}
+			</tr>
+			{{/each}}
+		</table>
+		</div>
+		{{outlet}}
+	</script>
+
+	<script type="text/x-handlebars" data-template-name="hour">
+		<div class="col-xs-12 col-sm-3 col-sm-pull-9">
+		<h2>Tussenuur met...</h2>
+			<div class="panel-group" id="tussenuren">
+			{{#each this}}
+				{{#if error}}
+					{{message}}
+				{{else}}
+
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<h3 class="panel-title">
+			<a data-toggle="collapse" data-parent="#tussenuren" {{bind-attr href="jaarlaag_id"}}>{{jaarlaag}}</a>
+		</h3>
+	</div>
+
+	<div {{bind-attr id="jaarlaag"}} class="panel-collapse collapse in">
+		<div class="panel-body">
+
+			<div class="panel-group" {{bind-attr id="jaarlaag_klassen"}}>
+				{{#each klassen}}
+
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title"><a data-toggle="collapse" {{bind-attr data-parent="jaarlaag_klassen_id" href="klas_id"}}>{{klas}}</a></h4>
+						</div>
+						<div {{bind-attr id="klas"}} class="panel-collapse collapse">
+							<div class="panel-body">
+								<ul class="list-group">
+									{{#each students}}
+										<li class="list-group-item">{{#link-to 'studentSchedule' this.id}}{{naam}}{{/link-to}}</li>
+									{{/each}}
+								</ul>
+							</div>
+						</div>
+					</div>
+				{{/each}}
+			</div>
+
+		</div>
+	</div>
+</div>
+
+				{{/if}}
+			{{/each}}
+			</div>
+		</div>
+	</script>
+
+
+	
+	<script src="/vendor/combined.js"></script>
+	<script src="/app.js"></script>
+</body>
+</html>

@@ -5,22 +5,24 @@ var express= require('express'),
 	adapter = require('./lib/mongodb_adapter'),
 	RSVP = require('rsvp'),
 	_ = require('lodash'),
-	StudentIndexModel = require('./lib/models/student_index_model');
+	StudentIndexModel = require('./lib/models/student_index_model'),
+	url = require('url');
 
 var ip = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1",
 	port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
 var model = new StudentIndexModel();
 
-app.use(function (req, res, next) {
-	res.header("Access-Control-Allow-Origin", "*");
-	next();
-});
+app.configure(function () {
+	app.use(function (req, res, next) {
+		res.header("Access-Control-Allow-Origin", "*");
+		next();
+	});
+	app.use(express.static(__dirname + '/public', {
+		maxAge: 1000 * 60 * 60 * 24
+	}));
 
-app.set('json spaces', 0);
-
-app.get('/', function(req, res) {
-	res.send('Roosters!');
+	app.set('json spaces', 0);
 });
 
 configure(model.items, model.item, model.Item).then(function () {
@@ -38,6 +40,12 @@ configure(model.items, model.item, model.Item).then(function () {
 		});
 	});
 }).then(function () {
+	app.get('/*', function(req, res) {
+		res.sendfile('index.html', {
+			root: __dirname + '/public'
+		});
+	});
+
 	app.listen(port, ip, function () {
 		console.log('Listening on %s:%d ...', ip, port);
 	});

@@ -86,15 +86,6 @@ h4.panel-title {
 .typeahead,
 .tt-query,
 .tt-hint {
-	/*width: 396px;
-	height: 30px;
-	padding: 8px 12px;
-	font-size: 24px;
-	line-height: 30px;
-	border: 2px solid #ccc;
-	-webkit-border-radius: 8px;
-	-moz-border-radius: 8px;
-	border-radius: 8px;*/
 	outline: none;
 
 	border: 1px solid #ccc;
@@ -109,7 +100,6 @@ h4.panel-title {
 }
 
 .typeahead:focus {
-	/*border: 2px solid #0097cf;*/
 	border: 1px solid #0097cf;
 }
 
@@ -124,18 +114,9 @@ h4.panel-title {
 }
 
 .tt-dropdown-menu {
-	/*width: 422px;
-	margin-top: 12px;*/
-	/*padding: 8px 0;*/
 	background-color: #fff;
 	border: 1px solid #ccc;
 	border: 1px solid rgba(0, 0, 0, 0.2);
-	/*-webkit-border-radius: 8px;
-	-moz-border-radius: 8px;
-	border-radius: 8px;
-	-webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-	-moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-	box-shadow: 0 5px 10px rgba(0,0,0,.2);*/
 
 	-webkit-box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -144,8 +125,6 @@ h4.panel-title {
 }
 
 .tt-suggestion {
-	/*padding: 3px 20px;
-	font-size: 18px;*/
 	line-height: 24px;
 
 	font-size: 16px;
@@ -153,9 +132,6 @@ h4.panel-title {
 }
 
 .tt-suggestion.tt-cursor {
-	/*color: #fff;
-	background-color: #0097cf;*/
-
 	background-color: #eee;
 }
 

@@ -23,7 +23,7 @@
 			</div>
 		</div>
 	</script>
-	<script type="text/x-handlebars" data-template-name="studentSchedule">
+	<script type="text/x-handlebars" data-template-name="schedule">
 		<div class="col-xs-12 col-sm-9 col-sm-push-3">
 		<table class="rooster">
 			<thead><h2>{{student.titel}}</h2></thead>
@@ -90,10 +90,7 @@
 		<h2>Tussenuur met...</h2>
 			<div class="panel-group" id="tussenuren">
 			{{#each this}}
-				{{#if error}}
-					{{message}}
-				{{else}}
-
+			
 <div class="panel panel-default">
 	<div class="panel-heading">
 		<h3 class="panel-title">
@@ -115,7 +112,7 @@
 							<div class="panel-body">
 								<ul class="list-group">
 									{{#each students}}
-										<li class="list-group-item">{{#link-to 'studentSchedule' this.id}}{{naam}}{{/link-to}}</li>
+										<li class="list-group-item">{{#link-to 'schedule' this.id}}{{naam}}{{/link-to}}</li>
 									{{/each}}
 								</ul>
 							</div>
@@ -128,7 +125,8 @@
 	</div>
 </div>
 
-				{{/if}}
+			{{else}}
+				<p>Niets gevonden!</p>
 			{{/each}}
 			</div>
 		</div>

@@ -1,8 +1,8 @@
 App = Ember.Application.create();
 
 App.Router.map(function() {
-	this.resource('studentSchedule', {path: ':id'}, function() {
-		this.resource('hour', {path: ':dag/:uur'});
+	this.resource('schedule', {path: ':id'}, function() {
+		this.resource('hour', {path: ':day/:hour'});
 	});
 });
 
@@ -23,14 +23,25 @@ App.Student = DS.Model.extend({
 	}.property('naam', 'klas')
 });
 
+App.Teacher = DS.Model.extend({
+	naam: DS.attr('string'),
+	titel: function () {
+		return this.get('id') + ', ' + this.get('naam');
+	}.property('naam', 'id')
+});
+
 App.StudentSchedule = DS.Model.extend({
 	timetable: DS.attr('timetable')
 });
 
-App.StudentScheduleController = Ember.ObjectController.extend({
+App.TeacherSchedule = DS.Model.extend({
+	timetable: DS.attr('timetable')
+});
+
+App.ScheduleController = Ember.ObjectController.extend({
 	actions: {
 		between: function (i, j) {
-			this.transitionToRoute('hour', Ember.dagen[i], Ember.uren[j]);
+			this.transitionToRoute('hour', Ember.days[i], Ember.hours[j]);
 		}
 	}
 });
@@ -70,13 +81,21 @@ App.ApplicationController = Ember.ArrayController.extend({
 				return;
 			}
 			var self = this;
-			Ember.engine.get(val, function (suggestions) {
+			Ember.studentEngine.get(val, function (suggestions) {
 				if (suggestions && suggestions.length) {
 					$('#bloodhound .typeahead')
 					.typeahead('val', _.first(suggestions).unique)
 					.typeahead('close');
 
-					self.transitionToRoute('studentSchedule', _.first(suggestions).id);
+					self.transitionToRoute('schedule', _.first(suggestions).id);
+				}
+			});
+			Ember.teacherEngine.get(val, function (suggestions) {
+				if (suggestions && suggestions.length) {
+					$('#bloodhound .typeahead')
+					.typeahead('val', _.first(suggestions).unique)
+					.typeahead('close');
+					self.transitionToRoute('schedule', _.first(suggestions).id);
 				}
 			});
 		}
@@ -85,24 +104,30 @@ App.ApplicationController = Ember.ArrayController.extend({
 
 App.ApplicationRoute = Ember.Route.extend({
 	init: function () {
-		Ember.dagen = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag'];
-		Ember.uren = ['1e', '2e', '3e', '4e', '5e', '6e', '7e', '8e'];
+		Ember.days = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag'];
+		Ember.hours = ['1e', '2e', '3e', '4e', '5e', '6e', '7e', '8e'];
 
-		Ember.engine = new Bloodhound({
+		var bloodhoundConfig = {
 			datumTokenizer: Bloodhound.tokenizers.obj.whitespace('unique'),
 			queryTokenizer: Bloodhound.tokenizers.whitespace,
 			local: []
-		});
-		this.store.find('student').then(function (data) {
-			Ember.engine.add(_.transform(data.content, function (result, student) {
-				result.push({unique:student.id, id: student.id});
-				return result.push({unique:student.get('naam'), id: student.id});
+		};
+		Ember.studentEngine = new Bloodhound(bloodhoundConfig);
+		Ember.studentEngine.initialize();
+		Ember.teacherEngine = new Bloodhound(bloodhoundConfig);
+		Ember.teacherEngine.initialize();
+		Ember.RSVP.hash({
+				teachers: this.store.find('teacher'),
+				students: this.store.find('student')
+			}).then(function (results) {
+			Ember.studentEngine.add(_.transform(results.students.content, function (result, item) {
+				result.push({ unique:item.id, id: item.id });
+				return result.push({ unique:item.get('naam'), id: item.id });
 			}));
-			Ember.engine.initialize();
+			Ember.teacherEngine.add(results.teachers.content.map(function (teacher) {
+				return { unique: teacher.get('titel'), id: teacher.id };
+			}));
 		});
-	},
-	model: function(params) {
-		return this.store.find('student');
 	}
 });
 
@@ -114,9 +139,19 @@ App.ApplicationView = Ember.View.extend({
 			highlight: true,
 			minLength: 1
 		}, {
-			name: 'searchBox',
+			name: 'students-search',
 			displayKey: 'unique',
-			source: Ember.engine.ttAdapter()
+			source: Ember.studentEngine.ttAdapter()/*,
+			templates: {
+				header: '<h5 class="suggestion-head">Leerlingen</h5>'
+			}*/
+		}, {
+			name: 'teachers-search',
+			displayKey: 'unique',
+			source: Ember.teacherEngine.ttAdapter()/*,
+			templates: {
+				header: '<h5 class="suggestion-head">Docenten</h5>'
+			}*/
 		}).on('typeahead:selected', function (event, item) {
 			self.get('controller').set('searchValue', item.unique);
 		}).on('typeahead:autocompleted', function (event, item) {
@@ -125,7 +160,7 @@ App.ApplicationView = Ember.View.extend({
 	}
 });
 
-App.StudentScheduleRoute = Ember.Route.extend({
+App.ScheduleRoute = Ember.Route.extend({
 	init: function () {
 		//https://api-roosters.rhcloud.com
 		$.getJSON('/studentScheduleRelations').then(function (data) {
@@ -133,45 +168,44 @@ App.StudentScheduleRoute = Ember.Route.extend({
 		});
 	},
 	model: function(params) {
+		var id = params.id;
+		var doc = 'student';
+		if (Number(id)) {
+			if (Number(id) > 1000) {
+			}else {
+				// classroom
+			}
+		}else {
+			if (/\d/g.test(id)) {
+				// class
+			}else {
+				doc = 'teacher';
+			}
+		}
 		return Ember.RSVP.hash({
-			schedule: this.store.find('studentSchedule', params.id),
-			student: this.store.find('student', params.id)
+			schedule: this.store.find(doc + 'Schedule', params.id),
+			student: this.store.find(doc, params.id)
 		});
 	}
 });
 
 App.HourRoute = Ember.Route.extend({
 	model: function(params) {
-		function error () {
-			return [{
-				error: true,
-				message: 'Niets gevonden'
-			}];
-		}
-
 		var relations = Ember.studentScheduleRelations;
 		if (!(relations && relations.length)) {
-			return error();
+			return [];
 		}
-		var dayIndex = Ember.dagen.indexOf(params.dag);
-		if (dayIndex == -1) {
-			return error();
-		}
-		var day = relations[dayIndex];
+		var day = relations[Ember.days.indexOf(params.day)];
 		if (!(day && day.length)) {
-			return error();
+			return [];
 		}
-		var hourIndex = Ember.uren.indexOf(params.uur);
-		if (hourIndex == -1) {
-			return error();
-		}
-		var hour = day[hourIndex];
-		var thisStudent = this.modelFor('studentSchedule').student;
+		var hour = day[Ember.hours.indexOf(params.hour)];
+		var thisStudent = this.modelFor('schedule').student;
 		var unique = thisStudent.id;
 		var jaarlaag = thisStudent.get('jaarlaag');
 		var ids = _.without(hour, Number(unique) || unique);
 		if (!ids.length) {
-			return error();
+			return [];
 		}
 		var store = this.store;
 		var students = ids.map(function (unique) {

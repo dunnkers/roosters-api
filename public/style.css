@@ -62,8 +62,6 @@ h4.panel-title {
 	background-color: #FFFFFF;
 }
 
-
-
 @media (max-width: 768px) {
 
 	.container {
@@ -83,6 +81,13 @@ h4.panel-title {
 }
 
 /*http://twitter.github.io/typeahead.js/css/examples.css*/
+.suggestion-head {
+	margin: 5px 10px 5px 10px;
+	padding: 1px 0px;
+	border-bottom: 1px solid #ccc;
+}
+
+
 .typeahead,
 .tt-query,
 .tt-hint {

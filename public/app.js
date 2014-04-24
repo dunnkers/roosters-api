@@ -34,9 +34,7 @@ App.StudentSchedule = DS.Model.extend({
 	timetable: DS.attr('timetable')
 });
 
-App.TeacherSchedule = DS.Model.extend({
-	timetable: DS.attr('timetable')
-});
+App.TeacherSchedule = App.StudentSchedule.extend();
 
 App.TimetableTransform = DS.Transform.extend({
 	deserialize: function(value) {
@@ -73,23 +71,21 @@ App.ApplicationController = Ember.ArrayController.extend({
 				return;
 			}
 			var self = this;
-			Ember.studentEngine.get(val, function (suggestions) {
-				if (suggestions && suggestions.length) {
-					$('#bloodhound .typeahead')
-					.typeahead('val', _.first(suggestions).unique)
-					.typeahead('close');
 
-					self.transitionToRoute('schedule', _.first(suggestions).id);
-				}
-			});
-			Ember.teacherEngine.get(val, function (suggestions) {
-				if (suggestions && suggestions.length) {
-					$('#bloodhound .typeahead')
-					.typeahead('val', _.first(suggestions).unique)
-					.typeahead('close');
-					self.transitionToRoute('schedule', _.first(suggestions).id);
-				}
-			});
+			function handle (engine) {
+				engine.get(val, function (suggestions) {
+					if (suggestions && suggestions.length) {
+						$('#bloodhound .typeahead')
+						.typeahead('val', _.first(suggestions).unique)
+						.typeahead('close');
+
+						self.transitionToRoute('schedule', _.first(suggestions).id);
+					}
+				});
+			}
+
+			handle(Ember.studentEngine);
+			handle(Ember.teacherEngine);
 		}
 	}
 });
@@ -114,7 +110,7 @@ App.ApplicationRoute = Ember.Route.extend({
 			}).then(function (results) {
 			Ember.studentEngine.add(_.transform(results.students.content, function (result, item) {
 				result.push({ unique:item.id, id: item.id });
-				return result.push({ unique:item.get('naam'), id: item.id });
+				return result.push({ unique: item.get('naam'), id: item.id });
 			}));
 			Ember.teacherEngine.add(results.teachers.content.map(function (teacher) {
 				return { unique: teacher.get('titel'), id: teacher.id };
@@ -133,17 +129,11 @@ App.ApplicationView = Ember.View.extend({
 		}, {
 			name: 'students-search',
 			displayKey: 'unique',
-			source: Ember.studentEngine.ttAdapter()/*,
-			templates: {
-				header: '<h5 class="suggestion-head">Leerlingen</h5>'
-			}*/
+			source: Ember.studentEngine.ttAdapter()
 		}, {
 			name: 'teachers-search',
 			displayKey: 'unique',
-			source: Ember.teacherEngine.ttAdapter()/*,
-			templates: {
-				header: '<h5 class="suggestion-head">Docenten</h5>'
-			}*/
+			source: Ember.teacherEngine.ttAdapter()
 		}).on('typeahead:selected', function (event, item) {
 			self.get('controller').set('searchValue', item.unique);
 		}).on('typeahead:autocompleted', function (event, item) {
@@ -153,58 +143,31 @@ App.ApplicationView = Ember.View.extend({
 });
 
 App.ScheduleRoute = Ember.Route.extend({
-	init: function () {
-		//https://api-roosters.rhcloud.com
-		$.getJSON('/studentScheduleRelations').then(function (data) {
-			Ember.studentScheduleRelations = data.relations;
-		});
-	},
 	model: function(params) {
-		/*var id = params.id;
-		var doc = 'student';
-		if (Number(id)) {
-			if (Number(id) > 1000) {
-			}else {
-				// classroom
-			}
-		}else {
-			if (/\d/g.test(id)) {
-				// class
-			}else {
-				doc = 'teacher';
-			}
-		}*/
 		var doc = this.controllerFor('schedule').resolveType(params.id);
-		/**
-		 * PASS different template depending on type here.
-		 * rending using a {{reder}} or {{view}} here
-		 */
+		
+		if (doc === 'student' && !Ember.scheduleRelations) {
+			$.getJSON('/studentScheduleRelations').then(function (data) {
+				Ember.scheduleRelations = data.relations;
+			});
+		}
+
 		return Ember.RSVP.hash({
 			schedule: this.store.find(doc + 'Schedule', params.id),
-			student: this.store.find(doc, params.id)
+			item: this.store.find(doc, params.id)
 		});
-	}/*,
-	renderTemplate: function () {
-		var type = this.controllerFor('schedule').type;
-		this.render(type + 'Schedule');
-	}*/
-});
-
-/*App.ScheduleController = Ember.ObjectController.extend({
-	actions: {
-		between: function (i, j) {
-			this.transitionToRoute('between', Ember.days[i], Ember.hours[j]);
-		}
 	}
-});*/
+});
 
 App.ScheduleController = Ember.ObjectController.extend({
 	type: 'student',
+	handleBetween: false,
 	resolveType: function (id) {
 		var ret = null;
 		if (Number(id)) {
 			if (Number(id) > 1000) {
 				ret = 'student';
+				this.set('handleBetween', true);
 			}else {
 				// classroom
 			}
@@ -213,6 +176,7 @@ App.ScheduleController = Ember.ObjectController.extend({
 				// class
 			}else {
 				ret = 'teacher';
+				this.set('handleBetween', false);
 			}
 		}
 
@@ -228,47 +192,14 @@ App.ScheduleController = Ember.ObjectController.extend({
 
 App.HourView = Ember.View.extend({
 	templateName: function () {
-		//console.log('returning template; ', this.get('controller').get('type') + 'Hour');
 		return this.get('controller').get('type') + 'Hour';
 	}.property()
 });
 
-/*App.HourView = Ember.View.extend({
-	templateName: 'hour',
-	titell: (function () {
-		return this.get('student.titel') + ' wow' + ' ' + this.get('student.id');
-	}).property('student.titel', 'student.id')
-});*/
-
-/*
-App.HourController = Ember.ObjectController.extend({
-	needs: 'schedule',
-	gast: (function () {
-		console.log('this; ', this.modelFor('schedule'));
-		return this.content.between ? 'yess men' : 'aii no chillings';
-	}).property('between'),
-	cel: (function () {
-		console.log('this; ', this.get('controllers.schedule').type);
-		return ['dude', 'ok..', '2211'];
-	}).property()
-});*/
-
-
-///ScheduleView or HourView
-/**
- * IN schedule route, use renderTemplate(), then determine which template to render,
- * according to controller.type.
- * @see  http://emberjs.com/guides/routing/rendering-a-template/
- *
- * Let the different templates use one container which has all the code containing the hours
- * themselves.
- * @see  http://emberjs.com/guides/templates/rendering-with-helpers/
- */
-
 
 App.BetweenRoute = Ember.Route.extend({
 	model: function(params) {
-		var relations = Ember.studentScheduleRelations;
+		var relations = Ember.scheduleRelations;
 		if (!(relations && relations.length)) {
 			return [];
 		}
@@ -277,22 +208,21 @@ App.BetweenRoute = Ember.Route.extend({
 			return [];
 		}
 		var hour = day[Ember.hours.indexOf(params.hour)];
-		var thisStudent = this.modelFor('schedule').student;
-		var unique = thisStudent.id;
-		var jaarlaag = thisStudent.get('jaarlaag');
+		var currentItem = this.modelFor('schedule').item;
+		var unique = currentItem.id;
 		var ids = _.without(hour, Number(unique) || unique);
 		if (!ids.length) {
 			return [];
 		}
 		var store = this.store;
 		var students = ids.map(function (unique) {
-			var student = store.getById('student', unique) || 
+			var item = store.getById('student', unique) || 
 				this.store.find('student', unique);
 			return {
-				naam: student.get('naam'),
-				klas: student.get('klas'),
-				jaarlaag: student.get('jaarlaag'),
-				id: student.id
+				naam: item.get('naam'),
+				klas: item.get('klas'),
+				jaarlaag: item.get('jaarlaag'),
+				id: item.id
 			};
 		});
 		var filtered = [];
@@ -312,7 +242,7 @@ App.BetweenRoute = Ember.Route.extend({
 				'jaarlaag_klassen': key + 'klassen',
 				'jaarlaag_klassen_id': '#' + key + 'klassen',
 				'klassen': klasFiltered,
-				'eigen_jaarlaag': jaarlaag === key ? true : false
+				'eigen_jaarlaag': currentItem.get('jaarlaag') === key ? true : false
 			});
 		});
 		filtered = _.sortBy(filtered, function (filter) {

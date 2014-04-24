@@ -23,49 +23,11 @@
 			</div>
 		</div>
 	</script>
-	<script type="text/x-handlebars" data-template-name="hourCont">
-		{{#if between}}
-			<td {{bind-attr class="between:tussenuur"}}
-				{{action 'between' i j}}>tussen
-			</td>
-		{{else}}
-			<td {{bind-attr class="examen:examenuur"}}>
-			{{#if nested}}
-				<table><tbody>
-					{{#each nested}}
-						<tr><td>
-							
-							{{#if examen}}
-								{{vak}}</br>
-								{{docent}}</br>
-								{{examen}}
-							{{else}}
-								{{vak}}</br>
-								{{docent}}</br>
-								{{lokaal}}
-							{{/if}}
-						</td></tr>
-					{{/each}}
-				</tbody></table>
-			{{else}}
-				{{#if examen}}
-					{{vak}}</br>
-					{{docent}}</br>
-					{{examen}}
-				{{else}}
-					{{vak}}</br>
-					{{docent}}</br>
-					{{lokaal}}
-				{{/if}}
-			{{/if}}
-			</td>
-		{{/if}}
-	</script>
 
 	<script type="text/x-handlebars" data-template-name="schedule">
 		<div class="col-xs-12 col-sm-9 col-sm-push-3">
 		<table class="rooster">
-			<thead><h2>{{student.titel}}</h2></thead>
+			<thead><h2>{{item.titel}}</h2></thead>
 			<tr>
 				<th>Uur\ Dag</th>
 				<th>maandag</th>
@@ -82,8 +44,8 @@
 					{{else}}
 
 						{{#if between}}
-							<td {{bind-attr class="between:tussenuur"}}
-								{{action 'between' i j}}>tussen
+							<td class="tussenuur" {{action 'between' i j}}>
+								tussen
 							</td>
 						{{else}}
 							<td {{bind-attr class="examen:examenuur"}}>
@@ -108,16 +70,8 @@
 		</table>
 		</div>
 		{{outlet}}
-
-
-		{{!-- 
-			{{render 'hourCont' this}}
-			type={{../../type}}
-			{{render 'studentHour' this}}
-		--}}
 	</script>
 
-	<!-- NO UNIQUE CLASSES-->
 	<script type="text/x-handlebars" data-template-name="studentHour">
 		{{vak}}</br>
 		{{docent}}</br>
@@ -135,6 +89,7 @@
 			</br>{{examen}}
 		{{/if}}
 	</script>
+
 	<script type="text/x-handlebars" data-template-name="between">
 		<div class="col-xs-12 col-sm-3 col-sm-pull-9">
 		<h2>Tussenuur met...</h2>
@@ -184,7 +139,7 @@
 
 
 	
-	<script src="/vendor/combined.js"></script>
+	<script src="/vendor/combined.min.js"></script>
 	<script src="/app.js"></script>
 	<script>
 	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

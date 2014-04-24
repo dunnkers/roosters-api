@@ -29,7 +29,7 @@ function handleCollection (model, controller) {
 	function handle (name, download, items) {
 		var localModels;
 
-		console.log('[%s]', name.toUpperCase());
+		console.log('[%s]', name);
 		console.log("Loading %s...", name);
 		return adapter.loadCollection(name).then(function (count) {
 			var action = count > 0 ? format('Loaded %d', count) : 'Created collection';
@@ -54,14 +54,13 @@ function handleCollection (model, controller) {
 			return adapter.archiveOldModels(name, items || localModels);
 		}).then(function (count) {
 			console.log('Archived %d old %s!', count, name);
-
-			console.log('[/%s]', name.toUpperCase());
 			return localModels;
 		}, function (error) {
 			console.error(error);
 		});
 	}
 
+	console.log('[%s]', model.items.toUpperCase());
 	return handle(model.items, function () {
 		return controller.authenticate(model.menuURL, 'menu').then(function (data) {
 			return controller.parseMenu(data);
@@ -84,6 +83,7 @@ function handleCollection (model, controller) {
 		});
 	}).then(function () {
 		console.log('Set %s schedule relations!', model.items);
+		console.log('[/%s]\n', model.items.toUpperCase());
 	}, function (error) {
 		console.error(error);
 	});

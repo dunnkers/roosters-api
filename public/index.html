@@ -23,6 +23,45 @@
 			</div>
 		</div>
 	</script>
+	<script type="text/x-handlebars" data-template-name="hourCont">
+		{{#if between}}
+			<td {{bind-attr class="between:tussenuur"}}
+				{{action 'between' i j}}>tussen
+			</td>
+		{{else}}
+			<td {{bind-attr class="examen:examenuur"}}>
+			{{#if nested}}
+				<table><tbody>
+					{{#each nested}}
+						<tr><td>
+							
+							{{#if examen}}
+								{{vak}}</br>
+								{{docent}}</br>
+								{{examen}}
+							{{else}}
+								{{vak}}</br>
+								{{docent}}</br>
+								{{lokaal}}
+							{{/if}}
+						</td></tr>
+					{{/each}}
+				</tbody></table>
+			{{else}}
+				{{#if examen}}
+					{{vak}}</br>
+					{{docent}}</br>
+					{{examen}}
+				{{else}}
+					{{vak}}</br>
+					{{docent}}</br>
+					{{lokaal}}
+				{{/if}}
+			{{/if}}
+			</td>
+		{{/if}}
+	</script>
+
 	<script type="text/x-handlebars" data-template-name="schedule">
 		<div class="col-xs-12 col-sm-9 col-sm-push-3">
 		<table class="rooster">
@@ -41,6 +80,7 @@
 					{{#if uur}}
 						<th>{{uur}}</th>
 					{{else}}
+
 						{{#if between}}
 							<td {{bind-attr class="between:tussenuur"}}
 								{{action 'between' i j}}>tussen
@@ -51,31 +91,16 @@
 								<table><tbody>
 									{{#each nested}}
 										<tr><td>
-											{{#if examen}}
-												{{vak}}</br>
-												{{docent}}</br>
-												{{examen}}
-											{{else}}
-												{{vak}}</br>
-												{{docent}}</br>
-												{{lokaal}}
-											{{/if}}
+											{{view 'hour'}}
 										</td></tr>
 									{{/each}}
 								</tbody></table>
 							{{else}}
-								{{#if examen}}
-									{{vak}}</br>
-									{{docent}}</br>
-									{{examen}}
-								{{else}}
-									{{vak}}</br>
-									{{docent}}</br>
-									{{lokaal}}
-								{{/if}}
+								{{view 'hour'}}
 							{{/if}}
 							</td>
 						{{/if}}
+
 					{{/if}}
 				{{/each}}
 			</tr>
@@ -83,9 +108,34 @@
 		</table>
 		</div>
 		{{outlet}}
+
+
+		{{!-- 
+			{{render 'hourCont' this}}
+			type={{../../type}}
+			{{render 'studentHour' this}}
+		--}}
 	</script>
 
-	<script type="text/x-handlebars" data-template-name="hour">
+	<!-- NO UNIQUE CLASSES-->
+	<script type="text/x-handlebars" data-template-name="studentHour">
+		{{vak}}</br>
+		{{docent}}</br>
+		{{lokaal}}
+		{{#if examen}}
+			</br>{{examen}}
+		{{/if}}
+	</script>
+
+	<script type="text/x-handlebars" data-template-name="teacherHour">
+		{{klas}}</br>
+		{{vak}}</br>
+		{{lokaal}}
+		{{#if examen}}
+			</br>{{examen}}
+		{{/if}}
+	</script>
+	<script type="text/x-handlebars" data-template-name="between">
 		<div class="col-xs-12 col-sm-3 col-sm-pull-9">
 		<h2>Tussenuur met...</h2>
 			<div class="panel-group" id="tussenuren">

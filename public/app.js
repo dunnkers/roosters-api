@@ -2,7 +2,7 @@ App = Ember.Application.create();
 
 App.Router.map(function() {
 	this.resource('schedule', {path: ':id'}, function() {
-		this.resource('hour', {path: ':day/:hour'});
+		this.resource('between', {path: ':day/:hour'});
 	});
 });
 
@@ -36,14 +36,6 @@ App.StudentSchedule = DS.Model.extend({
 
 App.TeacherSchedule = DS.Model.extend({
 	timetable: DS.attr('timetable')
-});
-
-App.ScheduleController = Ember.ObjectController.extend({
-	actions: {
-		between: function (i, j) {
-			this.transitionToRoute('hour', Ember.days[i], Ember.hours[j]);
-		}
-	}
 });
 
 App.TimetableTransform = DS.Transform.extend({
@@ -168,7 +160,7 @@ App.ScheduleRoute = Ember.Route.extend({
 		});
 	},
 	model: function(params) {
-		var id = params.id;
+		/*var id = params.id;
 		var doc = 'student';
 		if (Number(id)) {
 			if (Number(id) > 1000) {
@@ -181,15 +173,100 @@ App.ScheduleRoute = Ember.Route.extend({
 			}else {
 				doc = 'teacher';
 			}
-		}
+		}*/
+		var doc = this.controllerFor('schedule').resolveType(params.id);
+		/**
+		 * PASS different template depending on type here.
+		 * rending using a {{reder}} or {{view}} here
+		 */
 		return Ember.RSVP.hash({
 			schedule: this.store.find(doc + 'Schedule', params.id),
 			student: this.store.find(doc, params.id)
 		});
+	}/*,
+	renderTemplate: function () {
+		var type = this.controllerFor('schedule').type;
+		this.render(type + 'Schedule');
+	}*/
+});
+
+/*App.ScheduleController = Ember.ObjectController.extend({
+	actions: {
+		between: function (i, j) {
+			this.transitionToRoute('between', Ember.days[i], Ember.hours[j]);
+		}
+	}
+});*/
+
+App.ScheduleController = Ember.ObjectController.extend({
+	type: 'student',
+	resolveType: function (id) {
+		var ret = null;
+		if (Number(id)) {
+			if (Number(id) > 1000) {
+				ret = 'student';
+			}else {
+				// classroom
+			}
+		}else {
+			if (/\d/g.test(id)) {
+				// class
+			}else {
+				ret = 'teacher';
+			}
+		}
+
+		this.set('type', ret);
+		return ret;
+	},
+	actions: {
+		between: function (i, j) {
+			this.transitionToRoute('between', Ember.days[i], Ember.hours[j]);
+		}
 	}
 });
 
-App.HourRoute = Ember.Route.extend({
+App.HourView = Ember.View.extend({
+	templateName: function () {
+		//console.log('returning template; ', this.get('controller').get('type') + 'Hour');
+		return this.get('controller').get('type') + 'Hour';
+	}.property()
+});
+
+/*App.HourView = Ember.View.extend({
+	templateName: 'hour',
+	titell: (function () {
+		return this.get('student.titel') + ' wow' + ' ' + this.get('student.id');
+	}).property('student.titel', 'student.id')
+});*/
+
+/*
+App.HourController = Ember.ObjectController.extend({
+	needs: 'schedule',
+	gast: (function () {
+		console.log('this; ', this.modelFor('schedule'));
+		return this.content.between ? 'yess men' : 'aii no chillings';
+	}).property('between'),
+	cel: (function () {
+		console.log('this; ', this.get('controllers.schedule').type);
+		return ['dude', 'ok..', '2211'];
+	}).property()
+});*/
+
+
+///ScheduleView or HourView
+/**
+ * IN schedule route, use renderTemplate(), then determine which template to render,
+ * according to controller.type.
+ * @see  http://emberjs.com/guides/routing/rendering-a-template/
+ *
+ * Let the different templates use one container which has all the code containing the hours
+ * themselves.
+ * @see  http://emberjs.com/guides/templates/rendering-with-helpers/
+ */
+
+
+App.BetweenRoute = Ember.Route.extend({
 	model: function(params) {
 		var relations = Ember.studentScheduleRelations;
 		if (!(relations && relations.length)) {

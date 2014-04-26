@@ -14,11 +14,9 @@ var studentModel = new StudentIndexModel(),
 var teacherModel = new TeacherIndexModel(),
 	teacherController = new IndexController(teacherModel);
 
-/*handleCollection(studentModel, studentController).then(function () {
+handleCollection(studentModel, studentController).then(function () {
 	return handleCollection(teacherModel, teacherController);
-}).then(function () {*/
-
-handleCollection(teacherModel, teacherController).then(function () {
+}).then(function () {
 
 	adapter.close();
 	console.log('All finished!');

@@ -19,9 +19,6 @@ app.configure(function () {
 		res.header("Access-Control-Allow-Origin", "*");
 		next();
 	});
-	app.use(express.static(__dirname + '/public', {
-		maxAge: 1000 * 60 * 60 * 24
-	}));
 
 	app.set('json spaces', 0);
 });
@@ -30,9 +27,7 @@ configureCollection(studentModel).then(function () {
 	return configureCollection(teacherModel);
 }).then(function () {
 	app.get('/*', function(req, res) {
-		res.sendfile('index.html', {
-			root: __dirname + '/public'
-		});
+		res.redirect('http://roosters.darius.nl/');
 	});
 
 	app.listen(port, ip, function () {

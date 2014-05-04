@@ -49,12 +49,9 @@ function handleCollection (model, controller) {
 				stats.updated || 0, stats.inserted || 0, name);
 
 			console.log('Archiving old %s...', name);
-
-
-			console.log('items;', items ? items.length : -1);
-			console.log('localModels;', localModels ? localModels.length : -1);
-
-
+			console.log('Store has: %d local models and %d reference items',
+				localModels ? localModels.length : -1,
+				items ? items.length : -1);
 			return adapter.archiveOldModels(name, items || localModels);
 		}).then(function (count) {
 			console.log('Archived %d old %s!', count, name);
@@ -72,8 +69,7 @@ function handleCollection (model, controller) {
 	}).then(function (docs) {
 		console.log('');
 		return handle(model.schedules, function () {
-			return [];
-			//return controller.downloadSchedules(app ? docs : _.first(docs, 1));
+			return controller.downloadSchedules(app ? docs : _.first(docs, 1));
 		}, docs);
 	}).then(function () {
 		console.log('\nSetting %s schedule relations...', model.items);

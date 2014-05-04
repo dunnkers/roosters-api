@@ -26,10 +26,6 @@ app.configure(function () {
 configureCollection(studentModel).then(function () {
 	return configureCollection(teacherModel);
 }).then(function () {
-	app.get('/*', function(req, res) {
-		res.redirect('http://roosters.darius.nl/');
-	});
-
 	app.listen(port, ip, function () {
 		console.log('Listening on %s:%d ...', ip, port);
 	});

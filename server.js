@@ -28,15 +28,6 @@ configureCollection(studentModel).then(function () {
 }).then(function () {
 	app.listen(port, ip, function () {
 		console.log('Listening on %s:%d ...', ip, port);
-		
-		console.log('');
-		console.log('');
-		console.log('');
-		console.log('Performing a hotfix!');
-		console.log('');
-		console.log('RUNNING UPDATE...');
-		console.log('');
-		require('./update');
 	});
 });
 

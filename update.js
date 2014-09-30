@@ -88,23 +88,30 @@ db.connect().then(function () {
 
 	// store a schedule
 	queue = async.queue(function (task, callback) {
+		var item = task.item;
+
 		RSVP.all(task.lessons.map(function (lesson) {
 			return models.Lesson.upsert(lesson);
 		})).catch(function (err) {
 			if (err.name === 'VersionError') log.error('Concurrency issues!');
-			log.error('Failed to insert lessons for %d -', task.item._id, err);
+			log.error('Failed to insert lessons for %d -', item._id, err);
 		}).then(function (lessons) {
 			log.trace('Updated %d of %d lessons for %s [%s]', 
-				numberAffected(lessons), lessons.length, task.item._id, task.item.type);
+				numberAffected(lessons), lessons.length, item._id, item.type);
 
 			return models.Schedule.upsert(new models.Schedule({
-				_id: task.item._id,
-				itemType: task.item.type,
 				lessons: _.pluck(lessons, 'product')
 			}));
 		}).then(function (schedule) {
 			schedules.push(schedule);
+			
+			// set generated schedule id
+			item.schedule = schedule.product._id;
+			return item.promisedSave();
+		}).then(function () {
 			callback();
+		}, function (err) {
+			log.error('Failed to insert schedule for %d -', item._id, err);
 		});
 	}, 1);
 

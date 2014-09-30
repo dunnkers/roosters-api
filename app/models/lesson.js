@@ -44,7 +44,7 @@ function AbstractSchema () {
 		cluster: String,
 
 		// a lesson belongs to multiple schedules (many-to-many)
-		schedules: [ { type: String, ref: 'Schedule' } ]
+		schedules: [ { type: Schema.Types.ObjectId, ref: 'Schedule' } ]
 	});
 
 	// fields that determine a unique lesson. these are used to query.

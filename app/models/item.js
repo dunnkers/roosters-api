@@ -2,6 +2,7 @@ var util = require('util'),
 	// deps
 	mongoose = require('mongoose'),
 	timestamps = require('mongoose-timestamp'),
+	relationship = require('mongoose-relationship'),
 	Schema = mongoose.Schema,
 	_ = require('lodash');
 
@@ -12,7 +13,7 @@ function AbstractSchema () {
 	this.add({
 		_id: String,
 		index: { type: Number, required: true },
-		schedule: { type: String, ref: 'Schedule' }
+		schedule: { type: Schema.Types.ObjectId, ref: 'Schedule', childPath: 'items' }
 	});
 
 	// discriminator options - http://bit.ly/1knmNlG
@@ -21,11 +22,9 @@ function AbstractSchema () {
 
 	// createdAt and updatedAt properties
 	this.plugin(timestamps);
-
-	// duplicate
-	this.path('_id').set(function (value) {
-		this.schedule = value;
-		return value;
+	// one-to-many relationship with schedule
+	this.plugin(relationship, {
+		relationshipPathName: 'schedule'
 	});
 };
 util.inherits(AbstractSchema, Schema);

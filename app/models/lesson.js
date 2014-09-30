@@ -11,6 +11,9 @@ function w (str) {
 	return str.split(/\s+/);
 }
 
+/**
+ * Removes falsy values off an object.
+ */
 function clean (object) {
 	return _.transform(object, function (res, value, key) {
 		if (value) res[key] = value;
@@ -20,15 +23,14 @@ function clean (object) {
 function AbstractSchema () {
 	Schema.apply(this, arguments);
 
+	/** note on subIndex and sibling
+	 * Both subIndex and sibling are proven not to be consistent across items.
+	 * -> new strategy involves recreating subindexes
+	 */
 	this.add({
 		// positioning
 		day: Number,
 		index: Number,
-		/* note on subIndex and sibling: */
-		// not consistent across items. new strategy involves recreating subindexes
-		// upon detection of multiple lessons in one cell.
-		//subIndex: Number, // cells within a cell
-		//sibling: Number, // "261 262 263" -> three siblings
 		// states
 		empty: Boolean,
 		between: Boolean,
@@ -41,20 +43,13 @@ function AbstractSchema () {
 		subject: String,
 		cluster: String,
 
-		schedules: [ { type: String, ref: 'Schedule' } ]/*,
-		students: [ { type: String, ref: 'Student' } ],
-		teachers: [ { type: String, ref: 'Teacher' } ]*/
+		// a lesson belongs to multiple schedules (many-to-many)
+		schedules: [ { type: String, ref: 'Schedule' } ]
 	});
 
-	// lesson-specific properties of which can be multiple in -one- lesson.
-	// for example, subject is never duplicated
-	this.methods.specifics = [ 'room', 'teacher', 'cluster' ];
 	// fields that determine a unique lesson. these are used to query.
-	// -not- `subIndex`, lessons always nest in group lessons
-	// -not- `sibling`, on 'men' or 'bu' lessons this is not the same across all items
 	this.methods.fields = [ 'day', 'index', 
 						'empty', 'between', 'reserved',
-						// -not- `cluster`, student-lesson lacks this
 						'room', 'teacher', 'subject' ];
 
 	// discriminator options - http://bit.ly/1knmNlG
@@ -126,6 +121,7 @@ function AbstractSchema () {
 				zipped = zipped.map(clean);
 				// assign to lesson
 				zipped = zipped.map(function (zip) {
+					// sibling would be attached here
 					return _.assign(_.cloneDeep(lesson), zip);
 				});
 				// push to result

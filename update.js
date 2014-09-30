@@ -157,41 +157,6 @@ db.connect().then(function () {
 }).then(function () {
 	log.info('Updated %d schedules!', numberAffected(schedules));
 
-	/* Algorithm - contextual relationship links
-	-> now done by mognoose-relations plugin
-
-	print('\n');
-	log.info('Resolving lesson attendees...');
-	// USE AGGREGATION / MAP-REDUCE HERE!
-
-	return models.Lesson.find().exec().then(function (lessons) {
-		return RSVP.all(lessons.map(function (lesson) {
-			// query schedules with this lesson
-			return models.Schedule.find({
-				lessons: { $in: [ lesson._id ] }
-			}).populate('item').exec().then(function (schedules) {
-				if (!schedules) return 0;
-				// ugly. would be better to use `match` in populate
-
-				// teachers and students only
-				var students = _.pluck(_.filter(schedules, function (schedule) {
-					return schedule.item && schedule.item.itemType === 'Student';
-				}), '_id');
-				if (students.length > 0) lesson.students = students;
-				
-				var teachers = _.pluck(_.filter(schedules, function (schedule) {
-					return schedule.item && schedule.item.itemType === 'Teacher' && 
-						schedule.item._id != lesson.teacher;
-				}), '_id');
-				if (teachers.length > 0) lesson.teachers = teachers;
-
-				return lesson.promisedSave();
-			});
-		}));
-	});
-}).then(function (lessons) {
-	log.info('Resolved attendees for %d lessons.', numberAffected(lessons));*/
-
 	db.close();
 }, function (err) {
 	log.error('Oops, something went wrong! –', err);

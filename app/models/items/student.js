@@ -5,7 +5,7 @@ var ItemSchema = require('../item'),
 var Schema = new ItemSchema({
 	firstName: String,
 	lastName: String,
-	grade: String,
+	grade: { type: String, ref: 'Grade' },
 	group: { type: String, ref: 'Group', childPath: 'students' }
 });
 

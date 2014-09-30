@@ -11,11 +11,6 @@ function w (str) {
 	return str.split(/\s+/);
 }
 
-/*function wOnly (str) {
-	var split = w(str);
-	return split.length > 1 ? split : false;
-}*/
-
 function clean (object) {
 	return _.transform(object, function (res, value, key) {
 		if (value) res[key] = value;
@@ -65,55 +60,6 @@ function AbstractSchema () {
 	// discriminator options - http://bit.ly/1knmNlG
 	this.options.collection = 'lessons';
 	this.options.discriminatorKey = 'lessonType';
-
-	/**
-	 * Parses an <ItemLesson> into multiple <Lesson>'s.
-	 * @param  {ItemLesson} lesson A discriminated lesson
-	 * @return {[Lesson]}        Returns array of lessons
-	 */
-	/*this.statics.parse = function (lesson) {
-		var Lesson = this;
-		
-		var origin = lesson.toObject();
-
-		var specifics = _.pick(origin, lesson.specifics);
-		var splitted = _.transform(specifics, function (res, val, key) {
-			var split = wOnly(val);
-			if (split) res[key] = split;
-		});
-
-		// ordinary lesson
-		if (_.size(splitted) <= 0) {
-			return [ new Lesson(lesson.toObject()) ];
-		}
-
-		// split values. zip multi-dimensional array
-		var zipped = _.zip(_.values(splitted));
-
-		var keys = _.keys(specifics);
-		// create unique ids for each sibling
-		keys.push('id', '_id');
-		// make sure splitted values are overridden
-		origin = _.omit(origin, keys);
-
-		// objects with specific properties, splitted
-		var itemLessons = zipped.map(function (zip) {
-			// combine values / keys and trim empty values
-			return _.zipObject(keys, zip);
-		});
-
-		// create <Lesson>'s
-		return itemLessons.map(function (itemLesson, sibling) {
-			itemLesson.sibling = sibling;
-			// overwrite original lesson
-			var lesson = _.merge(_.cloneDeep(origin), itemLesson);
-			// strip undefined. Ex.: [['321, 320'], ['Buba']]
-			lesson = _.transform(lesson, function (res, val, key) {
-				if (!_.isUndefined(val)) res[key] = val;
-			});
-			return new Lesson(lesson);
-		});
-	};*/
 
 	/**
 	 * Serializes raw lessons. Detects distinctions, validates- and splits lessons.

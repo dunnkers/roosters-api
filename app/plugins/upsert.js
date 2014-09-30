@@ -32,27 +32,6 @@ module.exports = function (schema) {
 			doc.set(newDoc);
 
 			return doc.promisedSave();
-			
-			/* Algorithm - compares the two documents, disabling pre('save')
-			functionality. A newer algorithm makes sure the documents are
-			altered and equal before saving them.
-			
-			// don't save these keys // exclude them
-			
-			//newDoc = _.omit(newDoc, newDoc.excludes);
-			var toSave = _.omit(newDoc.toObject(), newDoc.excludes);
-			// only compare properties that we want to set
-			var found = _.pick(doc.toObject(), _.keys(toSave));
-
-			// overwrite properties
-			doc.set(newDoc);
-
-			// if different, save
-			// -> it's better to use doc.equals(newDoc)
-			return _.isEqual(toSave, found) ? {
-				product: doc,
-				numberAffected: 0
-			} : doc.promisedSave();*/
 		});
 	};
 };

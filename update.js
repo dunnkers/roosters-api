@@ -23,6 +23,14 @@ function numberAffected (results) {
 	return _.reduce(_.pluck(results, 'numberAffected'), sum) || 0;
 }
 
+/**
+ * Promised async mapping. Supports limited parallel and
+ * serial when no limit is given.
+ * @param  {Array} arr     Array to map.
+ * @param  {Promise} promise Promise to invoke with every item.
+ * @param  {Number} limit   Limit of parallel executions. If not given serial.
+ * @return {Promise}         Promise resolving when all items are done.
+ */
 function asyncMap (arr, promise, limit) {
 	return new RSVP.Promise(function (resolve, reject) {
 		async.mapLimit(arr, limit || 1, function (item, callback) {

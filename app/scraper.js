@@ -84,23 +84,6 @@ exports.parseLesson = function (day) {
 		});
 	}
 
-	/* Algorithm - iterates the contents(), uses filter and map
-	-> doesn't deal with lessons where only partial fields are filled
-	 
-	var trim = function() {
-		// return empty array for empty lines (= &nbsp;)
-		return $(this).text().trim();
-	};
-	var text = function () {
-		return $(this)[0].type === 'text';
-	};
-	var lesson = {
-		day: day,
-		// filter isolates text, map trims the array
-		content: content.filter(text).map(trim).toArray()
-	};
-	*/
-
 	var i = 0;
 	/* Algorithm - iterates contents() and maps to a var as the correct index
 	 */
@@ -115,21 +98,6 @@ exports.parseLesson = function (day) {
 			if (str) content[i] = str;
 		}
 	});
-	/* Algorithm - translates contents() to raw object and transforms it,
-		then manipulating the data.
-	-> doesn't compute text; html characters are not decoded
-		-> `empty` cannot be set from outside this function
-	
-	var content = _.transform($(this).contents(), function(res, value) {
-		// increment each linebreak. allows us to correctly map properties
-		// even when some are missing / empty
-		if (value.name === 'br') i ++;
-		if (value.type === 'text') res[i] = value.data.trim();
-	});*/
-
-	// setting content length is useless. use lesson.empty instead.
-	//content.length = _.values(content).length;
-
 
 	var lesson = {
 		day: day

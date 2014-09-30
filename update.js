@@ -1,99 +1,200 @@
-var format = require('util').format,
+var print = require('util').print,
+	// deps
+	RSVP = require('rsvp'),
 	_ = require('lodash'),
-	adapter = require('./lib/mongodb_adapter'),
-	IndexController = require('./lib/controllers/index_controller'),
-	StudentIndexModel = require('./lib/models/student_index_model'),
-	TeacherIndexModel = require('./lib/models/teacher_index_model'),
-	RSVP = require('rsvp');
+	async = require('async'),
+	log4js = require('log4js'),
+	log = log4js.getLogger('update');
 
-var app = process.env.OPENSHIFT_APP_NAME;
-var grab = process.argv[2];
-
-var studentModel = new StudentIndexModel(),
-	studentController = new IndexController(studentModel);
-var teacherModel = new TeacherIndexModel(),
-	teacherController = new IndexController(teacherModel);
-
-handleCollection(studentModel, studentController).then(function () {
-	return handleCollection(teacherModel, teacherController);
-}).then(function () {
-
-	adapter.close();
-	console.log('All finished!');
+log4js.configure({
+	appenders: [ { type: "console", layout: { type: "basic" } } ], replaceConsole: true
 });
 
-function handleCollection (model, controller) {
-	
-	function handle (name, download, items) {
-		var localModels;
+// scraper, connection and models
+var scraper = require('./app/scraper'),
+	db = require('./app/connection'),
+	models = require('./app/initializers/models');
 
-		console.log('[%s]', name);
-		console.log("Loading %s...", name);
-		return adapter.loadCollection(name).then(function (count) {
-			var action = count > 0 ? format('Loaded %d', count) : 'Created collection';
-			console.log('%s %s!\n', action, name);
+function sum (one, two) {
+	return one + two;
+}
 
-			console.log('Downloading %s...', name);
-			console.time('Download ' + name);
-		}).then(grab === '--nograb' ? function () {
-			return [];
-		} : download).then(function (models) {
-			console.timeEnd('Download ' + name);
-			console.log('Downloaded %d %s!\n', models.length, name);
-			localModels = models;
+function numberAffected (results) {
+	return _.reduce(_.pluck(results, 'numberAffected'), sum) || 0;
+}
 
-			console.log('Adding new %s...', name);
-			return adapter.addModels(name, models);
-		}).then(function (stats) {
-			console.log('Updated %d and inserted %d %s!\n', 
-				stats.updated || 0, stats.inserted || 0, name);
-
-			console.log('Archiving old %s...', name);
-			console.log('Store has: %d local models and %d reference items',
-				localModels ? localModels.length : -1,
-				items ? items.length : -1);
-			return adapter.archiveOldModels(name, items || localModels);
-		}).then(function (count) {
-			console.log('Archived %d old %s!', count, name);
-			return localModels;
-		}, function (error) {
-			console.error(error);
-		});
-	}
-
-	console.log('[%s]', model.items.toUpperCase());
-	return handle(model.items, function () {
-		return controller.authenticate(model.menuURL, 'menu').then(function (data) {
-			return controller.parseMenu(data);
-		});
-	}).then(function (docs) {
-		console.log('');
-		return handle(model.schedules, function () {
-			return controller.downloadSchedules(app ? docs : _.first(docs, 1));
-		}, docs);
-	}).then(function () {
-		console.log('\nSetting %s schedule relations...', model.items);
-		return adapter.loadCollection(model.scheduleRelations).then(function () {
-			return adapter.remove(model.scheduleRelations, {});
-		});
-	}).then(function () {
-		return adapter.findOne(model.schedules).then(function (doc) {
-			return adapter.resolveSchedule(model.schedules, _.first(doc.timetable)).then(function (doc) {
-				return adapter.insert(model.scheduleRelations, { relations: doc });
+function asyncMap (arr, promise, limit) {
+	return new RSVP.Promise(function (resolve, reject) {
+		async.mapLimit(arr, limit || 1, function (item, callback) {
+			promise(item).then(function (res) {
+				callback(null, res);
+			}, function (err) {
+				callback(err);
 			});
+		}, function (err, results) {
+			if (err) reject(err);
+
+			resolve(results);
 		});
-	}).then(function () {
-		console.log('Set %s schedule relations!', model.items);
-		console.log('[/%s]\n', model.items.toUpperCase());
-	}, function (error) {
-		console.error(error);
 	});
 }
 
+var queue, schedules = [];
+
+db.connect().then(function () {
+	log.info('Updating items...');
+	return RSVP.all(models.items.map(function (Item) {
+		return scraper.getItems(Item.modelName).then(function (items) {
+			// insert groups, serially.
+			if (Item === models.Group) {
+				return asyncMap(items, function (rawItem) {
+					var item = new Item(rawItem);
+
+					// insert a grade.
+					return models.Grade.upsert(new models.Grade({
+						_id: item.grade
+					})).then(function () {
+						return Item.upsert(item);
+					});
+				});
+			}
+
+			return RSVP.all(items.map(function (item) {
+				// -> item is serialized here.
+				return Item.upsert(new Item(item));
+			}));
+		}).then(function (items) {
+			var updated = numberAffected(items);
+			log.info('Updated %d [%s]', updated, Item.modelName);
+			return updated;
+		});
+	})).catch(function (err) {
+		log.error('Failed to update items -', err);
+	});
+}).then(function (items) {
+	log.info('Updated %d items.', _.reduce(items, sum) || 0);
 
 
-// if rooster reverted, it wont update
-// headers give lastModified information
-// modular schedule downloads by saving them when they arrive
-// maybe make unified handle method for both server and update, which loads
-// 		the collection. use middleware in then clause for this.
+	print('\n');
+	log.info('Downloading schedules...');
+
+	// store a schedule
+	queue = async.queue(function (task, callback) {
+		RSVP.all(task.lessons.map(function (lesson) {
+			return models.Lesson.upsert(lesson);
+		})).catch(function (err) {
+			if (err.name === 'VersionError') log.error('Concurrency issues!');
+			log.error('Failed to insert lessons for %d -', task.item._id, err);
+		}).then(function (lessons) {
+			log.trace('Updated %d of %d lessons for %s [%s]', 
+				numberAffected(lessons), lessons.length, task.item._id, task.item.type);
+
+			return models.Schedule.upsert(new models.Schedule({
+				_id: task.item._id,
+				itemType: task.item.type,
+				lessons: _.pluck(lessons, 'product')
+			}));
+		}).then(function (schedule) {
+			schedules.push(schedule);
+			callback();
+		});
+	}, 1);
+
+
+	return RSVP.all(models.items.map(function (Item) {
+		var ItemLesson = models[Item.modelName + 'Lesson'];
+
+		// Item = Student|Teacher|Room|Group
+		// "10971", "Hofe", "11381", "13769", "11051", "11322"
+		// "13769", "12993", "14445", "14445", "14495", "11467", "14339", "12702", "11466", "12343"
+		return Item.find({ _id: { $in: [ "13769", "10971", "Lafh", "11051" ] } }).exec()
+		.then(function (items) {
+			// items = [Student|...]
+			// execute http requests with a max concurrency of 5
+			return asyncMap(items, function (item) {
+				return scraper.getLessons(Item.modelName, item.toObject())
+				// for some reason, when using `.then(Lesson.x)` it doesn't  work.
+				.then(function (lessons) {
+					return ItemLesson.serialize(lessons);
+				}).then(function (lessons) {
+					var task = {
+						item: item,
+						lessons: lessons.map(function (lesson) {
+							// create new lesson and cast to general lesson
+							return new models.Lesson(new ItemLesson(lesson));
+						})
+					};
+					queue.push(task);
+
+					return task.lessons.length;
+				});
+			}, 5);
+		// first parse lessons - then store the schedule.
+		}).then(function (schedules) {
+			var updated = schedules.length;
+			log.trace('Downloaded %d schedules [%s]', updated, Item.modelName);
+
+			return updated;
+		});
+	})).catch(function (err) {
+		log.error('Failed to download schedules -', err);
+	});
+}).then(function (schedules) {
+	log.info('Downloaded %d schedules.', _.reduce(schedules, sum) || 0);
+
+	print('\n');
+	log.info('Updating schedules...');
+	return new RSVP.Promise(function (resolve, reject) {
+		if (queue.running() || !queue.idle()) {
+			log.trace('Processing %d tasks in queue...', queue.length());
+			queue.drain = function () {
+				resolve();
+			}
+		}else {
+			resolve();
+		}
+	});
+}).then(function () {
+	log.info('Updated %d schedules!', numberAffected(schedules));
+
+	/* Algorithm - contextual relationship links
+	-> now done by mognoose-relations plugin
+
+	print('\n');
+	log.info('Resolving lesson attendees...');
+	// USE AGGREGATION / MAP-REDUCE HERE!
+
+	return models.Lesson.find().exec().then(function (lessons) {
+		return RSVP.all(lessons.map(function (lesson) {
+			// query schedules with this lesson
+			return models.Schedule.find({
+				lessons: { $in: [ lesson._id ] }
+			}).populate('item').exec().then(function (schedules) {
+				if (!schedules) return 0;
+				// ugly. would be better to use `match` in populate
+
+				// teachers and students only
+				var students = _.pluck(_.filter(schedules, function (schedule) {
+					return schedule.item && schedule.item.itemType === 'Student';
+				}), '_id');
+				if (students.length > 0) lesson.students = students;
+				
+				var teachers = _.pluck(_.filter(schedules, function (schedule) {
+					return schedule.item && schedule.item.itemType === 'Teacher' && 
+						schedule.item._id != lesson.teacher;
+				}), '_id');
+				if (teachers.length > 0) lesson.teachers = teachers;
+
+				return lesson.promisedSave();
+			});
+		}));
+	});
+}).then(function (lessons) {
+	log.info('Resolved attendees for %d lessons.', numberAffected(lessons));*/
+
+	db.close();
+}, function (err) {
+	log.error('Oops, something went wrong! –', err);
+
+	db.close();
+});

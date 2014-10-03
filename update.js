@@ -51,7 +51,9 @@ var queue, schedules = [];
 
 db.connect().then(function () {
 	log.info('Updating items...');
-	return RSVP.all(models.items.map(function (Item) {
+	// insert items serially.
+	// -> Groups before Students; parent/child relation
+	return asyncMap(models.items, function (Item) {
 		return scraper.getItems(Item.modelName).then(function (items) {
 			// insert groups, serially.
 			if (Item === models.Group) {
@@ -76,7 +78,7 @@ db.connect().then(function () {
 			log.info('Updated %d [%s]', updated, Item.modelName);
 			return updated;
 		});
-	})).catch(function (err) {
+	}).catch(function (err) {
 		log.error('Failed to update items -', err);
 	});
 }).then(function (items) {
@@ -122,7 +124,7 @@ db.connect().then(function () {
 		// Item = Student|Teacher|Room|Group
 		// "10971", "Hofe", "11381", "13769", "11051", "11322"
 		// "13769", "12993", "14445", "14445", "14495", "11467", "14339", "12702", "11466", "12343"
-		return Item.find({ _id: { $in: [ "13769", "10971", "Lafh", "11051" ] } }).exec()
+		return Item.find({ _id: { $in: [ "032", "13769", "10971", "Lafh", "11051" ] } }).exec()
 		.then(function (items) {
 			// items = [Student|...]
 			// execute http requests with a max concurrency of 5

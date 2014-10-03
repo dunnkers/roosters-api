@@ -47,28 +47,25 @@ function asyncMap (arr, promise, limit) {
 	});
 }
 
+function drain (queue) {
+	return new RSVP.Promise(function (resolve, reject) {
+		if (queue.running() || !queue.idle()) {
+			log.trace('Processing %d tasks in queue...', queue.length());
+			queue.drain = function () {
+				resolve();
+			};
+		}else {
+			resolve();
+		}
+	});
+}
+
 var queue, schedules = [];
 
 db.connect().then(function () {
 	log.info('Updating items...');
-	// insert items serially.
-	// -> Groups before Students; parent/child relation
-	return asyncMap(models.items, function (Item) {
+	return RSVP.all(models.items.map(function (Item) {
 		return scraper.getItems(Item.modelName).then(function (items) {
-			// insert groups, serially.
-			if (Item === models.Group) {
-				return asyncMap(items, function (rawItem) {
-					var item = new Item(rawItem);
-
-					// insert a grade.
-					return models.Grade.upsert(new models.Grade({
-						_id: item.grade
-					})).then(function () {
-						return Item.upsert(item);
-					});
-				});
-			}
-
 			return RSVP.all(items.map(function (item) {
 				// -> item is serialized here.
 				return Item.upsert(new Item(item));
@@ -78,12 +75,15 @@ db.connect().then(function () {
 			log.info('Updated %d [%s]', updated, Item.modelName);
 			return updated;
 		});
-	}).catch(function (err) {
+	})).catch(function (err) {
 		log.error('Failed to update items -', err);
 	});
 }).then(function (items) {
 	log.info('Updated %d items.', _.reduce(items, sum) || 0);
 
+	return models.Item.aggregateGrades();
+}).then(function (grades) {
+	log.info('Aggregated %d grades.', numberAffected(grades));
 
 	print('\n');
 	log.info('Downloading schedules...');
@@ -161,16 +161,7 @@ db.connect().then(function () {
 
 	print('\n');
 	log.info('Updating schedules...');
-	return new RSVP.Promise(function (resolve, reject) {
-		if (queue.running() || !queue.idle()) {
-			log.trace('Processing %d tasks in queue...', queue.length());
-			queue.drain = function () {
-				resolve();
-			}
-		}else {
-			resolve();
-		}
-	});
+	return drain(queue);
 }).then(function () {
 	log.info('Updated %d schedules!', numberAffected(schedules));
 

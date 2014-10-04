@@ -31,10 +31,10 @@ function AbstractSchema () {
 	// grades
 	this.statics.aggregateGrades = function () {
 		var self = this;
-		return this.aggregate({ '$match': { type: 'Group' } }, {
-			'$group': {
+		return this.aggregate({ $match: { type: 'Group' } }, {
+			$group: {
 				_id: '$grade',
-				groups: { '$push': '$_id' }
+				groups: { $push: '$_id' }
 			}
 		}).exec().then(function (grades) {
 			return RSVP.all(grades.map(function (grade) {

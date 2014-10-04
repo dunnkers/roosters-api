@@ -1,25 +1,27 @@
 var mongoose = require('mongoose'),
 	timestamps = require('mongoose-timestamp'),
+	relationship = require('mongoose-relationship'),
 	Schema = mongoose.Schema,
 	_ = require('lodash'),
 	RSVP = require('RSVP');
 
 var Schema = new Schema({
 	_id: String,
-	students: [{
-		type: String,
-		ref: 'Student'
-	}]
+	students: [ { type: String, ref: 'Student', childPath: 'clusters' } ]
 });
 
 Schema.plugin(timestamps);
+
+Schema.plugin(relationship, {
+	relationshipPathName: 'students'
+});
 
 Schema.statics.aggregation = function () {
 	var Lesson = this.model('Lesson'),
 		Schedule = this.model('Schedule'),
 		Item = this.model('Item'),
 		Cluster = this.model('Cluster');
-	
+
 	// group all different clusters
 	return Lesson.aggregate({ $match: { cluster: { $exists: true } } }, {
 		$group: {

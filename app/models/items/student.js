@@ -6,7 +6,8 @@ var Schema = new ItemSchema({
 	firstName: String,
 	lastName: String,
 	grade: { type: String, ref: 'Grade' },
-	group: { type: String, ref: 'Group', childPath: 'students' }
+	group: { type: String, ref: 'Group', childPath: 'students' },
+	clusters: [ { type: String, ref: 'Cluster' } ]
 });
 
 Schema.plugin(relationship, {

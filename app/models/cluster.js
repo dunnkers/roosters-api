@@ -7,8 +7,7 @@ var mongoose = require('mongoose'),
 
 var Schema = new Schema({
 	_id: String,
-	students: [ { type: String, ref: 'Student', childPath: 'clusters' } ],
-	schedule: { type: Schema.Types.ObjectId, ref: 'Schedule' }
+	students: [ { type: String, ref: 'Student', childPath: 'clusters' } ]
 });
 
 Schema.plugin(timestamps);
@@ -62,37 +61,5 @@ Schema.statics.aggregation = function () {
 		}));
 	});
 };
-
-Schema.statics.aggregateSchedules = function () {
-	var Lesson = this.model('Lesson'),
-		Schedule = this.model('Schedule'),
-		Cluster = this.model('Cluster');
-
-	return Lesson.aggregate({ $match: { cluster: { $exists: true } } }, {
-		$group: {
-			_id: "$cluster",
-			lessons: {
-				$addToSet: "$_id"
-			}
-		}
-	}).exec().then(function (schedules) {
-		return RSVP.all(schedules.map(function (schedule) {
-			var id = schedule._id;
-			delete schedule._id;
-
-			return Schedule.upsert(new Schedule(schedule)).then(function (schedule) {
-				// set relation
-				return Cluster.findById(id).exec().then(function (cluster) {
-					if (!cluster) return {};
-
-					cluster.schedule = schedule.product._id;
-					return cluster.promisedSave();
-				}).then(function () {
-					return schedule;
-				});
-			});
-		}));
-	});
-}
 
 mongoose.model('Cluster', Schema);

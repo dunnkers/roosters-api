@@ -52,6 +52,7 @@ function drain (queue) {
 		if (queue.running() || !queue.idle()) {
 			log.trace('Processing %d tasks in queue...', queue.length());
 			queue.drain = function () {
+				log.trace('All tasks finished!');
 				resolve();
 			};
 		}else {
@@ -168,6 +169,10 @@ db.connect().then(function () {
 	return models.Cluster.aggregation();
 }).then(function (clusters) {
 	log.info('Aggregated %d clusters.', numberAffected(clusters));
+
+	return models.Cluster.aggregateSchedules();
+}).then(function (clusters) {
+	log.info('Aggregated %d cluster schedules.', numberAffected(clusters));
 
 	db.close();
 }, function (err) {

@@ -41,7 +41,7 @@ function AbstractSchema () {
 		teacher: { type: String, ref: 'Teacher' },
 		group: { type: String, ref: 'Group' },
 		subject: String,
-		cluster: String,
+		cluster: { type: String, ref: 'Cluster' },
 
 		// a lesson belongs to multiple schedules (many-to-many)
 		schedules: [ { type: Schema.Types.ObjectId, ref: 'Schedule' } ]

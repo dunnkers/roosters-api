@@ -81,7 +81,7 @@ db.connect().then(function () {
 }).then(function (items) {
 	log.info('Updated %d items.', _.reduce(items, sum) || 0);
 
-	return models.Item.aggregateGrades();
+	return models.Grade.aggregation();
 }).then(function (grades) {
 	log.info('Aggregated %d grades.', numberAffected(grades));
 

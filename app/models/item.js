@@ -3,9 +3,7 @@ var util = require('util'),
 	mongoose = require('mongoose'),
 	timestamps = require('mongoose-timestamp'),
 	relationship = require('mongoose-relationship'),
-	Schema = mongoose.Schema,
-	_ = require('lodash'),
-	RSVP = require('RSVP');
+	Schema = mongoose.Schema;
 
 // schema inheritance - http://bit.ly/1jOOq13
 function AbstractSchema () {
@@ -27,22 +25,6 @@ function AbstractSchema () {
 	this.plugin(relationship, {
 		relationshipPathName: 'schedule'
 	});
-
-	// grades
-	this.statics.aggregateGrades = function () {
-		var self = this;
-		return this.aggregate({ $match: { type: 'Group' } }, {
-			$group: {
-				_id: '$grade',
-				groups: { $push: '$_id' }
-			}
-		}).exec().then(function (grades) {
-			return RSVP.all(grades.map(function (grade) {
-				var Grade = self.model('Grade');
-				return Grade.upsert(new Grade(grade));
-			}));
-		});
-	};
 };
 util.inherits(AbstractSchema, Schema);
 

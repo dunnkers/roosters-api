@@ -64,7 +64,7 @@ var queue, schedules = [];
 
 db.connect().then(function () {
 	log.info('Updating items...');
-	return RSVP.all(models.items.map(function (Item) {
+	return asyncMap(models.items, function (Item) {
 		return scraper.getItems(Item.modelName).then(function (items) {
 			return RSVP.all(items.map(function (item) {
 				// -> item is serialized here.
@@ -75,7 +75,7 @@ db.connect().then(function () {
 			log.info('Updated %d [%s]', updated, Item.modelName);
 			return updated;
 		});
-	})).catch(function (err) {
+	}).catch(function (err) {
 		log.error('Failed to update items -', err);
 	});
 }).then(function (items) {

@@ -165,6 +165,10 @@ db.connect().then(function () {
 }).then(function () {
 	log.info('Updated %d schedules!', numberAffected(schedules));
 
+	return models.Cluster.aggregation();
+}).then(function (clusters) {
+	log.info('Aggregated %d clusters.', numberAffected(clusters));
+
 	db.close();
 }, function (err) {
 	log.error('Oops, something went wrong! –', err);

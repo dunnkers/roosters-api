@@ -15,13 +15,14 @@ var Schema = new Schema({
 	}]
 });
 
-Schema.methods.fields = [ 'lessons' ];
-
 Schema.plugin(timestamps);
 
 // lessons many-to-many relationship
 Schema.plugin(relationship, {
 	relationshipPathName: 'lessons'
 });
+
+Schema.methods.fields = [ 'lessons' ];
+Schema.statics.populatePath = 'lessons';
 
 mongoose.model('Schedule', Schema);

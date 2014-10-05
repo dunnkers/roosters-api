@@ -5,7 +5,8 @@ var format = require('util').format,
 	log4js = require('log4js'),
 	log = log4js.getLogger('server'),
 	_ = require('lodash'),
-	RSVP = require('RSVP');
+	RSVP = require('RSVP'),
+	utils = require('mongoose/lib/utils');
 
 log4js.configure({
 	appenders: [ { type: "console", layout: { type: "basic" } } ], replaceConsole: true
@@ -51,24 +52,111 @@ app.get('/', function (req, res, next) {
 app.get('/menus/item', function (req, res, next) {
 	console.time('item menu retrieval');
 
-	var selection = '-type -createdAt -updatedAt -index';
+	var selection = '-type -createdAt -updatedAt -index -__v';
 	RSVP.hash({
-		students: collections.students.find().select(selection).exec(),
-		groups: collections.groups.find().select(selection).exec(),
-		teachers: collections.teachers.find().select(selection).exec(),
-		rooms: collections.rooms.find().select(selection).exec(),
-		menu: collections.items.find().select('_id type').exec()
+		students: collections.students.find().lean().select(selection).exec(),
+		groups: collections.groups.find().lean().select(selection).exec(),
+		teachers: collections.teachers.find().lean().select(selection).exec(),
+		rooms: collections.rooms.find().lean().select(selection).exec(),
+		menu: collections.items.find().lean().select('_id type').exec()
 	}).then(function (root) {
-		console.timeEnd('item menu retrieval');
+		root = _.mapValues(root, function (items) {
+			return items.map(function (item) {
+				item.id = item._id;
+				delete item._id;
+				return item;
+			});
+		});
 
 		root.menu = {
 			id: 'item',
 			items: root.menu
 		};
 
+		console.timeEnd('item menu retrieval');
 		res.send(root);
 	}, function (error) {
 		if (error) return next('Failed to retrieve item menu!');
+	});
+});
+
+/*
+ * Special routes for polymorphic models.
+ */
+app.get('/items', function (req, res, next) {
+	var select = '-index -__v -updatedAt -createdAt';
+	console.time('item menu retrieval');
+	collections.items.find().lean().select(select).exec().then(function (docs) {
+		if (!docs) res.status(404).send('We couldn\'t find items, sorry!');
+
+		docs = docs.map(function (item) {
+			item.id = item._id;
+			delete item._id;
+			return item;
+		});
+
+		var root = _.groupBy(docs, 'type');
+
+		root.items = docs.map(function (item) {
+			return {
+				id: item.id,
+				item: {
+					id: item.id,
+					type: item.type
+				}
+			}
+		});
+
+		// pluralize
+		root = _.transform(root, function (res, value, key) {
+			res[utils.toCollectionName(key)] = value;
+		});
+		
+		console.timeEnd('item menu retrieval');
+		res.send(root);
+	}, function (error) {
+		var msg = format('We went wrong good men.');
+		if (error) return next(msg);
+	});
+});
+
+// item detail
+app.get('/items/:id', function (req, res, next) {
+	collections.items.findById(req.id).exec().then(function (doc) {
+		if (!doc) res.status(404).send('We couldn\'t find that one, sorry!');
+
+		var root = {
+			item: {
+				id: doc.id,
+				item: {
+					id: doc.id,
+					type: doc.type
+				}
+			}
+		};
+
+		root[utils.toCollectionName(doc.type)] = [ doc.toJSON() ];
+
+		res.send(root);
+	}, function (error) {
+		var msg = format('Failed to retrieve specific model! [%s](%s)', 
+			req.model.modelName, req.id);
+		if (error) return next(msg);
+	});
+});
+
+app.get('/:model/:id', function (req, res, next) {
+	var populatePath = req.model.populatePath;
+	var query = req.model.findById(req.id);
+	// req.model.findPopulated()
+	(populatePath ? query.populate(populatePath) : query).exec().then(function (doc) {
+		if (!doc) res.status(404).send('We couldn\'t find that one, sorry!');
+
+		res.send(req.model.root(doc));
+	}, function (error) {
+		var msg = format('Failed to retrieve specific model! [%s](%s)', 
+			req.model.modelName, req.id);
+		if (error) return next(msg);
 	});
 });
 
@@ -88,42 +176,6 @@ app.get('/:model', function (req, res, next) {
 	});
 });
 
-app.get('/schedules/:id', function (req, res, next) {
-	collections.schedules.findById(req.id).populate('lessons').exec()
-	.then(function (schedule) {
-		if (!schedule) res.status(404).send('We couldn\'t find that one, sorry!');
-
-		var lessons = schedule.lessons.map(function (lesson) {
-			return lesson.toJSON();
-		});
-
-		var root = {
-			schedule: schedule.toJSON(),
-			lessons: lessons
-		};
-
-		root.schedule.lessons = schedule.populated('lessons');
-
-		res.send(root);
-	});
-});
-
-app.get('/:model/:id', function (req, res, next) {
-	req.model.findById(req.id).exec().then(function (doc) {
-		if (!doc) res.status(404).send('We couldn\'t find that one, sorry!');
-		var root = {};
-
-		// use proper singularization (inflection) for teacher-lesson
-		root[req.model.modelName.toLowerCase()] = doc.toJSON();
-
-		res.send(root);
-	}, function (error) {
-		var msg = format('Failed to retrieve specific model! [%s](%s)', 
-			req.model.modelName, req.id);
-		if (error) return next(msg);
-	});
-});
-
 
 db.connect().then(function () {
 	app.listen(port, ip, function () {
@@ -135,7 +187,6 @@ db.connect().then(function () {
 
 
 /*
-
 console.time('METHOD 1');
 console.time('items retrieval');
 db.connect().then(function () {

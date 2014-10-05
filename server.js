@@ -75,9 +75,7 @@ app.get('/menus/item', function (req, res, next) {
 
 		console.timeEnd('item menu retrieval');
 		res.send(root);
-	}, function (error) {
-		if (error) return next('Failed to retrieve item menu!');
-	});
+	}, handleError(req, next));
 });
 
 function transform (docs) {
@@ -95,7 +93,7 @@ function transform (docs) {
  */
 function sendItems (res) {
 	return function (docs) {
-		if (!docs) res.status(404).send('We couldn\'t find items, sorry!');
+		if (!docs) res.status(404).send('We couldn\'t find that, sorry!');
 
 		var arr = _.isArray(docs);
 		docs = arr ? docs : [ docs ];
@@ -135,27 +133,31 @@ function sendItems (res) {
 	};
 }
 
+function handleError (req, next) {
+	return function (err) {
+		var model = req.model ? format('[%s] ', req.model.modelName) : '',
+			id = req.id ? format(' (%s)', req.id) : '';
+
+		var msg = format('%sFailed to retrieve model!%s - %s', model, id, err);
+		if (err) return next(msg);
+	};
+}
+
 app.get('/items', function (req, res, next) {
 	var select = '-index -__v -updatedAt -createdAt';
 	console.time('item menu retrieval');
 	collections.items.find().lean().select(select).exec()
-	.then(transform)
-	.then(sendItems(res), 
-	function (error) {
-		var msg = format('We went wrong good men.');
-		if (error) return next(msg);
-	}).then(function () {
-		console.timeEnd('item menu retrieval');
-	});
+		.then(transform)
+		.then(sendItems(res), handleError(req, next))
+		.then(function () {
+			console.timeEnd('item menu retrieval');
+		});
 });
 
 // item detail
 app.get('/items/:id', function (req, res, next) {
-	collections.items.findById(req.id).lean().exec().then(sendItems(res), function (error) {
-		var msg = format('Failed to retrieve specific model! [%s](%s)', 
-			req.model.modelName, req.id);
-		if (error) return next(msg);
-	});
+	collections.items.findById(req.id).lean().exec()
+		.then(sendItems(res), handleError(req, next));
 });
 
 app.get('/:model/:id', function (req, res, next) {
@@ -166,11 +168,7 @@ app.get('/:model/:id', function (req, res, next) {
 		if (!doc) res.status(404).send('We couldn\'t find that one, sorry!');
 
 		res.send(req.model.root(doc));
-	}, function (error) {
-		var msg = format('Failed to retrieve specific model! [%s](%s)', 
-			req.model.modelName, req.id);
-		if (error) return next(msg);
-	});
+	}, handleError(req, next));
 });
 
 app.get('/:model', function (req, res, next) {
@@ -183,10 +181,7 @@ app.get('/:model', function (req, res, next) {
 		});
 
 		res.send(root);
-	}, function (error) {
-		var msg = format('Failed to retrieve collection! [%s]', req.model.modelName);
-		if (error) return next(msg);
-	});
+	}, handleError(req, next));
 });
 
 

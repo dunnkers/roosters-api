@@ -80,65 +80,68 @@ app.get('/menus/item', function (req, res, next) {
 	});
 });
 
+function transform (docs) {
+	return docs.map(function (doc) {
+		doc.id = doc._id;
+		delete doc._id;
+
+		return doc;
+	});
+}
+
 /*
  * Special routes for polymorphic models.
  */
-app.get('/items', function (req, res, next) {
-	var select = '-index -__v -updatedAt -createdAt';
-	console.time('item menu retrieval');
-	collections.items.find().lean().select(select).exec().then(function (docs) {
+function sendItems (res) {
+	return function (docs) {
 		if (!docs) res.status(404).send('We couldn\'t find items, sorry!');
 
-		docs = docs.map(function (item) {
-			item.id = item._id;
-			delete item._id;
-			return item;
-		});
+		var arr = _.isArray(docs);
+		docs = arr ? docs : [ docs ];
 
 		var root = _.groupBy(docs, 'type');
 
-		root.items = docs.map(function (item) {
-			return {
-				id: item.id,
-				item: {
-					id: item.id,
-					type: item.type
-				}
-			}
-		});
-
 		// pluralize
-		root = _.transform(root, function (res, value, key) {
-			res[utils.toCollectionName(key)] = value;
+		root = _.transform(root, function (res, docs, key) {
+			res[utils.toCollectionName(key)] = docs;
 		});
-		
-		console.timeEnd('item menu retrieval');
-		res.send(root);
-	}, function (error) {
-		var msg = format('We went wrong good men.');
-		if (error) return next(msg);
-	});
-});
 
-// item detail
-app.get('/items/:id', function (req, res, next) {
-	collections.items.findById(req.id).exec().then(function (doc) {
-		if (!doc) res.status(404).send('We couldn\'t find that one, sorry!');
-
-		var root = {
-			item: {
+		function wrap (doc) {
+			return {
 				id: doc.id,
 				item: {
 					id: doc.id,
 					type: doc.type
 				}
-			}
-		};
+			};
+		}
 
-		root[utils.toCollectionName(doc.type)] = [ doc.toJSON() ];
-
+		if (arr) 
+			root.items = docs.map(wrap);
+		else 
+			root.item = wrap(_.first(docs));
+		
 		res.send(root);
-	}, function (error) {
+	};
+}
+
+app.get('/items', function (req, res, next) {
+	var select = '-index -__v -updatedAt -createdAt';
+	console.time('item menu retrieval');
+	collections.items.find().lean().select(select).exec()
+	.then(transform)
+	.then(sendItems(res), 
+	function (error) {
+		var msg = format('We went wrong good men.');
+		if (error) return next(msg);
+	}).then(function () {
+		console.timeEnd('item menu retrieval');
+	});
+});
+
+// item detail
+app.get('/items/:id', function (req, res, next) {
+	collections.items.findById(req.id).exec().then(sendItems(res), function (error) {
 		var msg = format('Failed to retrieve specific model! [%s](%s)', 
 			req.model.modelName, req.id);
 		if (error) return next(msg);

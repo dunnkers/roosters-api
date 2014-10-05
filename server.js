@@ -48,36 +48,6 @@ app.get('/', function (req, res, next) {
 	res.send('Roosters-API');
 });
 
-// item menu
-app.get('/menus/item', function (req, res, next) {
-	console.time('item menu retrieval');
-
-	var selection = '-type -createdAt -updatedAt -index -__v';
-	RSVP.hash({
-		students: collections.students.find().lean().select(selection).exec(),
-		groups: collections.groups.find().lean().select(selection).exec(),
-		teachers: collections.teachers.find().lean().select(selection).exec(),
-		rooms: collections.rooms.find().lean().select(selection).exec(),
-		menu: collections.items.find().lean().select('_id type').exec()
-	}).then(function (root) {
-		root = _.mapValues(root, function (items) {
-			return items.map(function (item) {
-				item.id = item._id;
-				delete item._id;
-				return item;
-			});
-		});
-
-		root.menu = {
-			id: 'item',
-			items: root.menu
-		};
-
-		console.timeEnd('item menu retrieval');
-		res.send(root);
-	}, handleError(req, next));
-});
-
 function transform (docs) {
 	return docs.map(function (doc) {
 		doc.id = doc._id;

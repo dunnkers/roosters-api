@@ -49,12 +49,14 @@ app.get('/', function (req, res, next) {
 });
 
 function transform (docs) {
-	return docs.map(function (doc) {
-		doc.id = doc._id;
-		delete doc._id;
+	return _.isArray(docs) ? docs.map(transformDoc) : transformDoc(doc);
+}
 
-		return doc;
-	});
+function transformDoc (doc) {
+	doc.id = doc._id;
+	delete doc._id;
+
+	return doc;
 }
 
 /*
@@ -113,6 +115,7 @@ function handleError (req, next) {
 	};
 }
 
+// polymorphic item menu
 app.get('/items', function (req, res, next) {
 	var select = '-index -__v -updatedAt -createdAt';
 	console.time('item menu retrieval');
@@ -124,9 +127,10 @@ app.get('/items', function (req, res, next) {
 		});
 });
 
-// item detail
+// polymorphic item detail
 app.get('/items/:id', function (req, res, next) {
 	collections.items.findById(req.id).lean().exec()
+		.then(transformDoc)
 		.then(sendItems(res), handleError(req, next));
 });
 

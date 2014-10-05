@@ -63,12 +63,12 @@ function transformDoc (doc) {
  * Wrap polymorphic models.
  * -> works only with lean models!
  */
-function sendItems (res) {
+function sendItems (modelName, res) {
 	return function (docs) {
 		if (!docs) res.status(404).send('We couldn\'t find that, sorry!');
 
-		var arr = _.isArray(docs);
-		docs = arr ? docs : [ docs ];
+		var single = _.isArray(docs) || docs.length === 1;
+		docs = _.isArray(docs) ? docs : [ docs ];
 
 		var root = _.groupBy(docs, 'type');
 
@@ -96,10 +96,10 @@ function sendItems (res) {
 			});
 		});
 
-		if (arr) 
-			root.items = docs;
+		if (single) 
+			root[utils.toCollectionName(modelName)] = docs;
 		else 
-			root.item = _.first(docs);
+			root[modelName.toLowerCase()] = _.first(docs);
 		
 		res.send(root);
 	};
@@ -121,7 +121,7 @@ app.get('/items', function (req, res, next) {
 	console.time('item menu retrieval');
 	collections.items.find().lean().select(select).exec()
 		.then(transform)
-		.then(sendItems(res), handleError(req, next))
+		.then(sendItems(collections.items.modelName, res), handleError(req, next))
 		.then(function () {
 			console.timeEnd('item menu retrieval');
 		});
@@ -131,7 +131,7 @@ app.get('/items', function (req, res, next) {
 app.get('/items/:id', function (req, res, next) {
 	collections.items.findById(req.id).lean().exec()
 		.then(transformDoc)
-		.then(sendItems(res), handleError(req, next));
+		.then(sendItems(collections.items.modelName, res), handleError(req, next));
 });
 
 app.get('/:model/:id', function (req, res, next) {

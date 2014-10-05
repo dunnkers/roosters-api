@@ -90,7 +90,8 @@ function transform (docs) {
 }
 
 /*
- * Special routes for polymorphic models.
+ * Wrap polymorphic models.
+ * -> works only with lean models!
  */
 function sendItems (res) {
 	return function (docs) {
@@ -106,7 +107,8 @@ function sendItems (res) {
 			res[utils.toCollectionName(key)] = docs;
 		});
 
-		function wrap (doc) {
+		// wrap
+		docs = docs.map(function (doc) {
 			return {
 				id: doc.id,
 				item: {
@@ -114,12 +116,20 @@ function sendItems (res) {
 					type: doc.type
 				}
 			};
-		}
+		});
+
+		// remove types before attaching
+		root = _.mapValues(root, function (docs) {
+			return docs.map(function (doc) {
+				delete doc.type;
+				return doc;
+			});
+		});
 
 		if (arr) 
-			root.items = docs.map(wrap);
+			root.items = docs;
 		else 
-			root.item = wrap(_.first(docs));
+			root.item = _.first(docs);
 		
 		res.send(root);
 	};
@@ -141,7 +151,7 @@ app.get('/items', function (req, res, next) {
 
 // item detail
 app.get('/items/:id', function (req, res, next) {
-	collections.items.findById(req.id).exec().then(sendItems(res), function (error) {
+	collections.items.findById(req.id).lean().exec().then(sendItems(res), function (error) {
 		var msg = format('Failed to retrieve specific model! [%s](%s)', 
 			req.model.modelName, req.id);
 		if (error) return next(msg);

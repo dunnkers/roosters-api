@@ -105,6 +105,65 @@ function sendItems (modelName, res) {
 	};
 }
 
+function getPopulatePath (schema) {
+	var populatePaths = _.transform(schema.paths, function (res, path, key) {
+		if (path.options.populate/*&& path.options.ref*/) res[key] = path;
+	});
+	return _.keys(populatePaths).join(' ');
+}
+
+function populate (docs) {
+	return RSVP.all(docs.map(function (doc) {
+		return doc;
+	}));
+}
+
+function send (req, res, next) {
+	/*
+	POPULATION
+	req.model.schema.
+
+	POLYMORPHIC
+	polymorphic = req.model.discriminators;
+
+	Strategy
+	1. populate
+	2. check polymorphic. assign to root.
+	3. assign all other to root.
+	 */
+	/*
+	implementation options:
+	[x] as a static model method: .then(req.model.populate)
+	[-] as a different find method: req.model.findPopulated() (no support for lean)
+	[-] as a query instance method: req.model.find().populateAll().
+	 */
+	/*
+	-pseudo code implementation-
+	model = req.model
+
+	docs.map
+		RSVP.hash
+			populate =
+				-> model.populatePaths(doc).map( path
+					
+					populate(
+						collections[path.options.ref].populatePaths();
+				)
+	 */
+	var populatePath = getPopulatePath(req.model.schema);
+
+	req.model.find({_id:'10971'}).lean().populate(populatePath).exec().then(populate).then(function (docs) {
+		if (!docs) res.status(404).send('We couldn\'t find those, sorry!');
+		var root = {};
+
+		root[req.modelName] = docs.map(function (doc) {
+			return doc.toJSON();
+		});
+
+		res.send(root);
+	}, handleError(req, next));
+}
+
 function handleError (req, next) {
 	return function (err) {
 		var model = req.model ? format('[%s] ', req.model.modelName) : '',
@@ -145,19 +204,7 @@ app.get('/:model/:id', function (req, res, next) {
 	}, handleError(req, next));
 });
 
-app.get('/:model', function (req, res, next) {
-	req.model.find().exec().then(function (docs) {
-		if (!docs) res.status(404).send('We couldn\'t find those, sorry!');
-		var root = {};
-
-		root[req.modelName] = docs.map(function (doc) {
-			return doc.toJSON();
-		});
-
-		res.send(root);
-	}, handleError(req, next));
-});
-
+app.get('/:model', send);
 
 db.connect().then(function () {
 	app.listen(port, ip, function () {

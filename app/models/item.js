@@ -12,7 +12,12 @@ function AbstractSchema () {
 	this.add({
 		_id: String,
 		index: { type: Number, required: true },
-		schedule: { type: Schema.Types.ObjectId, ref: 'Schedule', childPath: 'items' }
+		schedule: {
+			type: Schema.Types.ObjectId,
+			ref: 'Schedule',
+			childPath: 'items',
+			populate: true
+		}
 	});
 
 	// discriminator options - http://bit.ly/1knmNlG

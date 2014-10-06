@@ -7,7 +7,8 @@ var Schema = new Schema({
 	lessons: [{
 		type: Schema.Types.ObjectId,
 		ref: 'Lesson',
-		childPath: 'schedules'
+		childPath: 'schedules',
+		populate: true
 	}],
 	items: [{
 		type: String,
@@ -23,6 +24,5 @@ Schema.plugin(relationship, {
 });
 
 Schema.methods.fields = [ 'lessons' ];
-Schema.statics.populatePath = 'lessons';
 
 mongoose.model('Schedule', Schema);

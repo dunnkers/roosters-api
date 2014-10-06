@@ -37,7 +37,7 @@ function AbstractSchema () {
 		reserved: Boolean,
 
 		// lesson-specific serialization
-		room: { type: String, ref: 'Room' },
+		room: { type: String, ref: 'Room', populate: true },
 		teacher: { type: String, ref: 'Teacher' },
 		group: { type: String, ref: 'Group' },
 		subject: String,

@@ -112,55 +112,102 @@ function getPopulatePath (schema) {
 	return _.keys(populatePaths).join(' ');
 }
 
-function populate (docs) {
-	return RSVP.all(docs.map(function (doc) {
-		return doc;
-	}));
+function populatePaths (model) {
+	return _.transform(model.schema.paths, function (res, path, key) {
+		var options = path.options;
+		options = options.type && _.isArray(options.type) ? 
+			_.first(options.type) : options;
+		var pop = options.populate,
+			ref = options.ref;
+		if (pop && ref) res[key] = model.model(ref);
+	});
 }
 
-function send (req, res, next) {
-	/*
-	POPULATION
-	req.model.schema.
+function cleanNulls (object) {
+	return _.transform(object, function (res, value, key) {
+		if (!_.isNull(value)) res[key] = value;
+	});
+}
 
-	POLYMORPHIC
-	polymorphic = req.model.discriminators;
+var models;
+function populate (model) {
 
-	Strategy
-	1. populate
-	2. check polymorphic. assign to root.
-	3. assign all other to root.
-	 */
-	/*
-	implementation options:
-	[x] as a static model method: .then(req.model.populate)
-	[-] as a different find method: req.model.findPopulated() (no support for lean)
-	[-] as a query instance method: req.model.find().populateAll().
-	 */
-	/*
-	-pseudo code implementation-
-	model = req.model
+	return function (docs) {
+		if (!docs) return docs;
 
-	docs.map
-		RSVP.hash
-			populate =
-				-> model.populatePaths(doc).map( path
-					
-					populate(
-						collections[path.options.ref].populatePaths();
-				)
-	 */
+		var paths = populatePaths(model);
+
+		// remove paths of which are no ref, for objects.
+		if (!_.isArray(docs)) {
+			paths = _.transform(paths, function (res, value, key) {
+				if (docs[key]) res[key] = value;
+			});
+		}
+
+		var path = _.keys(paths).join(' '),
+			options = { lean: true };
+
+		// DO NOT USE DEPTH anymore! it remains in a session!!!!!
+		if (_.isEmpty(paths) || depth > 100) return docs;
+
+		// when arrays have docs missing references, population prop is added as null.
+		depth ++;
+		return model.populate(docs, {
+			path: path,
+			options: options
+		}).then(function (docs) { // can be array or object
+			function recurse (doc) { // can be array or object
+				doc = _.isArray(doc) ? doc.map(cleanNulls) : cleanNulls(doc);
+				// first clean object.
+
+				_.forIn(paths, function (value, key) {
+					if (!_.isUndefined(doc[key])) doc[key] = populate(value)(doc[key]);
+				});
+				return RSVP.hash(doc);
+			}
+
+			// now check populated props for population
+			return _.isArray(docs) ? RSVP.all(docs.map(recurse)) : recurse(docs);
+		});
+	};
+}
+
+function exists (res) {
+	return function (docs) {
+		if (!docs || _.isEmpty(docs)) {
+			res.status(404).send('We couldn\'t find those, sorry!');
+		}
+		return docs;
+	}
+}
+
+function assemble (docs) {
+	var root = {};
+	root.items = docs;
+
+	return root;
+}
+
+function send (res) {
+	return function (root) {
+		res.send(root);
+	}
+}
+
+function route (req, res, next) {
+	var timeStr = format('%s%s retrieval', req.modelName, 
+		req.id ? format(' (%s)', req.id) : '');
+	console.time(timeStr);
+
 	var populatePath = getPopulatePath(req.model.schema);
 
-	req.model.find({_id:'10971'}).lean().populate(populatePath).exec().then(populate).then(function (docs) {
-		if (!docs) res.status(404).send('We couldn\'t find those, sorry!');
-		var root = {};
-
-		root[req.modelName] = docs.map(function (doc) {
-			return doc.toJSON();
-		});
-
-		res.send(root);
+	req.model.find({_id: {$in:['320','10971']}}).lean()/*.populate(populatePath)*/.exec()
+		.then(exists(res))
+		.then(populate(req.model))
+		.then(assemble)
+		.then(send(res))
+		.then(function () {
+		console.timeEnd(timeStr);
 	}, handleError(req, next));
 }
 
@@ -174,7 +221,7 @@ function handleError (req, next) {
 	};
 }
 
-// polymorphic item menu
+/*// polymorphic item menu
 app.get('/items', function (req, res, next) {
 	var select = '-index -__v -updatedAt -createdAt';
 	console.time('item menu retrieval');
@@ -191,7 +238,7 @@ app.get('/items/:id', function (req, res, next) {
 	collections.items.findById(req.id).lean().exec()
 		.then(transformDoc)
 		.then(sendItems(collections.items.modelName, res), handleError(req, next));
-});
+});*/
 
 app.get('/:model/:id', function (req, res, next) {
 	var populatePath = req.model.populatePath;
@@ -204,7 +251,7 @@ app.get('/:model/:id', function (req, res, next) {
 	}, handleError(req, next));
 });
 
-app.get('/:model', send);
+app.get('/:model', route);
 
 db.connect().then(function () {
 	app.listen(port, ip, function () {

@@ -105,13 +105,6 @@ function sendItems (modelName, res) {
 	};
 }
 
-function getPopulatePath (schema) {
-	var populatePaths = _.transform(schema.paths, function (res, path, key) {
-		if (path.options.populate/*&& path.options.ref*/) res[key] = path;
-	});
-	return _.keys(populatePaths).join(' ');
-}
-
 function populatePaths (model) {
 	return _.transform(model.schema.paths, function (res, path, key) {
 		var options = path.options;
@@ -213,9 +206,7 @@ function route (req, res, next) {
 		req.id ? format(' (%s)', req.id) : '');
 	console.time(timeStr);
 
-	var populatePath = getPopulatePath(req.model.schema);
-
-	req.model.find({_id: {$in:['320','10971']}}).lean()/*.populate(populatePath)*/.exec()
+	req.model.find().lean().exec()
 		.then(exists(res))
 		.then(populate(req.model))
 		.then(assemble)

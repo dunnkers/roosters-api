@@ -53,13 +53,13 @@ function transform (docs) {
 }
 
 function transformDoc (doc) {
-	// return id the way ember wants it
+	// id instead of mongodb's _id
 	doc.id = doc._id;
 	delete doc._id;
 
-	// remove empty arrays
 	doc = _.transform(doc, function (res, value, key) {
-		if (!(_.isArray(value) && _.isEmpty(value))) res[key] = value;
+		// remove empty values and arrays
+		if (_.isEmpty(value)) res[key] = value;
 	});
 
 	return doc;

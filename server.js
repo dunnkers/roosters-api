@@ -72,8 +72,6 @@ function transformDoc (doc) {
  */
 function sendItems (modelName, res) {
 	return function (docs) {
-		if (!docs) res.status(404).send('We couldn\'t find that, sorry!');
-
 		var single = _.isArray(docs) || docs.length === 1;
 		docs = _.isArray(docs) ? docs : [ docs ];
 
@@ -112,6 +110,79 @@ function sendItems (modelName, res) {
 	};
 }
 
+/**
+ * Constructs a root object.
+ * @param  {Model} model  The initial model.
+ * @param {Object} root Accumulating root object.
+ * @return {[Document]}  An array of documents.
+ */
+function makeRoot (model, root) {
+	// converge with `autoPopulate.populatePaths()`
+	function getModelForKey (key) {
+		var path = model.schema.paths[key];
+
+		if (!path) return;
+
+		var options = path.options;
+		options = options.type && _.isArray(options.type) ? 
+			_.first(options.type) : options;
+
+		if (options.ref) return model.model(options.ref);
+	}
+
+	return function (docs) {
+		// `docs` is an object -> originates from findById
+		var singular = !root && !_.isArray(docs);
+		root = root || {};
+
+
+		function attach (doc) {
+			_.forIn(doc, function (value, key) {
+				var recurse = false;
+				
+				if (_.isArray(value))
+					recurse = _.some(value, '_id');
+				else if (_.isObject(value) && value._id)
+					recurse = true
+
+				var model = getModelForKey(key);
+				
+				// property has been populated
+				if (recurse && model) {
+					doc[key] = _.isArray(value) ? 
+						_.pluck(value, '_id') : value._id;
+					makeRoot(model, root)(value);
+				}
+			});
+
+			return doc;
+		}
+
+		// attach additional object if present
+		if (_.isArray(docs))
+			docs = docs.map(attach);
+		else
+			docs = attach(docs);
+
+
+		if (singular) {
+			root[model.modelName.toLowerCase()] = docs;
+		} else {
+			var key = utils.toCollectionName(model.modelName),
+				arr = _.isArray(docs) ? docs : [ docs ];
+			if (root[key]) {
+				arr.forEach(function (item) {
+					if (!_.some(root[key], { _id: item._id })) root[key].push(item);
+				});
+			}else {
+				root[key] = arr;
+			}
+		}
+
+		return root;
+	};
+}
+
 function exists (res) {
 	return function (docs) {
 		if (!docs || _.isEmpty(docs)) {
@@ -139,12 +210,17 @@ function route (req, res, next) {
 		req.id ? format(' (%s)', req.id) : '');
 	console.time(timeStr);
 
-	var query = req.id ? req.model.findById(req.id) : req.model.find();
+	var query = req.id ? req.model.findById(req.id) : req.model.find({ _id: { $in: [ "032", "13769", "10971", "Lafh", "11051", "327" ] } });
 	query.lean().exec()
 		.then(exists(res))
 		.then(req.model.autoPopulate({ lean: true }))
+		.then(makeRoot(req.model))
+		.then(function (docs) {
+			// now that we're flat thanks to makeRoot, change the id.
+			return _.mapValues(docs, transform);
+		})
 		//.then(transform)
-		.then(assemble)
+		//.then(assemble)
 		.then(send(res))
 		.then(function () {
 		console.timeEnd(timeStr);

@@ -125,9 +125,13 @@ function populatePaths (model) {
 }
 
 function cleanNulls (object) {
-	return _.transform(object, function (res, value, key) {
-		if (!_.isNull(value)) res[key] = value;
-	});
+	_.forIn(object, function (value, key) {
+		if (_.isNull(value)) {
+			object[key] = undefined; // if object is mongoose doc
+			delete object[key]; // if object is lean
+		}
+	})
+	return object;
 }
 
 /**
@@ -169,11 +173,8 @@ function populate (model, options, models) {
 			options: options
 		}).then(function (docs) {
 			function recurse (doc) {
-				// doc is lean, we can alter null values
-				if (!doc.toJSON) {
-					// remove null values padded when population failed.
-					doc = _.isArray(doc) ? doc.map(cleanNulls) : cleanNulls(doc);
-				}
+				// remove null values padded when population failed.
+				doc = _.isArray(doc) ? doc.map(cleanNulls) : cleanNulls(doc);
 
 				// create hash of fields to populate (not hashing doc to retain prototype)
 				return RSVP.hash(_.transform(paths, function (res, model, path) {
@@ -227,7 +228,7 @@ function route (req, res, next) {
 	var query = req.id ? req.model.findById(req.id) : req.model.find() ;
 	query.lean().exec()
 		.then(exists(res))
-		.then(populate(req.model))
+		.then(populate(req.model, { lean: true }))
 		.then(transform)
 		.then(assemble)
 		.then(send(res))

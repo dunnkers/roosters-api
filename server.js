@@ -59,7 +59,8 @@ function transformDoc (doc) {
 
 	doc = _.transform(doc, function (res, value, key) {
 		// remove empty values and arrays
-		if (_.isEmpty(value)) res[key] = value;
+		var empty = (_.isArray(value) || _.isString(value)) && _.isEmpty(value);
+		if (!empty) res[key] = value;
 	});
 
 	return doc;

@@ -52,26 +52,38 @@ module.exports = function (schema) {
 
 			// filter paths to populate
 			paths = _.transform(paths, function (res, model, path) {
-				// only populate fields that actually exist
-				var exists = _.isArray(docs) || docs[path];// arr ? _.some(docs, path)
-
 				// don't populate previously populated models
-				if (!_.contains(models, model.modelName) && exists) res[path] = model;
+				if (_.contains(models, model.modelName)) return false;
+
+				// only populate fields that actually exist
+				var exists = _.isArray(docs) ? _.some(docs, path) : docs[path];
+				if (exists) res[path] = model;
 			});
 
 			if (_.isEmpty(paths)) return docs;
 
-			var path = _.keys(paths).join(' ');
+			var path = _.keys(paths);
+
+			// do not populate docs that do not have any of the paths
+			// -> this makes for a slightly better performance
+			var merge = [];
+			docs = _.isArray(docs) ? _.transform(docs, function (res, doc) {
+				if (_.isEmpty(_.pick(doc, path)))
+					merge.push(doc);
+				else
+					res.push(doc);
+			}) : docs;
 
 			return model.populate(docs, {
-				path: path,
+				path: path.join(' '),
 				options: options
 			}).then(function (docs) {
 				function recurse (doc) {
-					// remove null values padded when population failed.
+					// remove null values padded for which population failed.
 					doc = _.isArray(doc) ? doc.map(cleanNulls) : cleanNulls(doc);
 
-					// create hash of fields to populate (not hashing doc to retain prototype)
+					// create hash of fields to populate (doc is not hashed to
+					// retain prototype)
 					return RSVP.hash(_.transform(paths, function (res, model, path) {
 						// if ref was padded as null or somehow became undefined
 						if (!_.isUndefined(doc[path]) && !_.isNull(doc[path])) {
@@ -88,7 +100,10 @@ module.exports = function (schema) {
 					});
 				}
 
-				return _.isArray(docs) ? RSVP.all(docs.map(recurse)) : recurse(docs);
+				if (_.isArray(docs))
+					return RSVP.all(docs.map(recurse).concat(merge));
+				else
+					return recurse(docs);
 			});
 		};
 	};

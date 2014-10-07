@@ -32,9 +32,4 @@ function mapModels (models) {
 	});
 }
 
-/*// ember-runtime string prototype - http://bit.ly/1ubP1je
-function capitalize(str) {
-	return str.charAt(0).toUpperCase() + str.substr(1);
-}*/
-
 module.exports = mapModels(mongoose.models);

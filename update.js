@@ -15,8 +15,8 @@ var scraper = require('./app/scraper'),
 	db = require('./app/connection'),
 	models = require('./app/initializers/models');
 
-function sum (one, two) {
-	return one + two;
+function sum (a, b) {
+	return a + b;
 }
 
 function numberAffected (results) {
@@ -125,7 +125,7 @@ db.connect().then(function () {
 		// Item = Student|Teacher|Room|Group
 		// "10971", "Hofe", "11381", "13769", "11051", "11322"
 		// "13769", "12993", "14445", "14445", "14495", "11467", "14339", "12702", "11466", "12343"
-		return Item.find({ _id: { $in: [ "032", "13769", "10971", "Lafh", "11051" ] } }).exec()
+		return Item.find({ _id: { $in: [ "032", "13769", "10971", "Lafh", "11051", "327" ] } }).exec()
 		.then(function (items) {
 			// items = [Student|...]
 			// execute http requests with a max concurrency of 5

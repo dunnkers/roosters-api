@@ -139,7 +139,7 @@ function route (req, res, next) {
 		req.id ? format(' (%s)', req.id) : '');
 	console.time(timeStr);
 
-	var query = req.id ? req.model.findById(req.id) : req.model.find() ;
+	var query = req.id ? req.model.findById(req.id) : req.model.find();
 	query.lean().exec()
 		.then(exists(res))
 		.then(req.model.autoPopulate({ lean: true }))

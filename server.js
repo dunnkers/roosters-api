@@ -192,13 +192,6 @@ function exists (res) {
 	}
 }
 
-function assemble (docs) {
-	var root = {};
-	root.items = docs;
-
-	return root;
-}
-
 function send (res) {
 	return function (root) {
 		res.send(root);
@@ -214,39 +207,15 @@ function route (req, res, next) {
 			// now that we're flat thanks to makeRoot, change the id.
 			return _.mapValues(docs, transform);
 		})
-		//.then(transform)
-		//.then(assemble)
-		.then(send(res), handleError(req, next));
-}
-
-function handleError (req, next) {
-	return function (err) {
-		var model = req.model ? format('[%s] ', req.model.modelName) : '',
+		.then(send(res), function (err) {
+			var model = req.model ? format('[%s] ', req.model.modelName) : '',
 			id = req.id ? format(' (%s)', req.id) : '';
 
-		var msg = format('%sFailed to retrieve model!%s - %s', model, id, err);
-		if (err) return next(msg);
-	};
+			var msg = format('%sFailed to retrieve model!%s - %s', model, id, err);
+			if (err) return next(msg);
+		}
+	);
 }
-
-/*// polymorphic item menu
-app.get('/items', function (req, res, next) {
-	var select = '-index -__v -updatedAt -createdAt';
-	console.time('item menu retrieval');
-	collections.items.find().lean().select(select).exec()
-		.then(transform)
-		.then(sendItems(collections.items.modelName, res), handleError(req, next))
-		.then(function () {
-			console.timeEnd('item menu retrieval');
-		});
-});
-
-// polymorphic item detail
-app.get('/items/:id', function (req, res, next) {
-	collections.items.findById(req.id).lean().exec()
-		.then(transformDoc)
-		.then(sendItems(collections.items.modelName, res), handleError(req, next));
-});*/
 
 app.use('/:model', function (req, res, next) {
 	var timeStr = format('%s%s retrieval', req.modelName, 

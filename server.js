@@ -212,7 +212,8 @@ function route (req, res, next) {
 		req.id ? format(' (%s)', req.id) : '');
 	console.time(timeStr);
 
-	req.model.find().lean().exec()
+	var query = req.id ? req.model.findById(req.id) : req.model.find() ;
+	query.lean().exec()
 		.then(exists(res))
 		.then(populate(req.model))
 		.then(transform)
@@ -252,16 +253,7 @@ app.get('/items/:id', function (req, res, next) {
 		.then(sendItems(collections.items.modelName, res), handleError(req, next));
 });*/
 
-app.get('/:model/:id', function (req, res, next) {
-	var populatePath = req.model.populatePath;
-	var query = req.model.findById(req.id);
-	// req.model.findPopulated()
-	(populatePath ? query.populate(populatePath) : query).exec().then(function (doc) {
-		if (!doc) res.status(404).send('We couldn\'t find that one, sorry!');
-
-		res.send(req.model.root(doc));
-	}, handleError(req, next));
-});
+app.get('/:model/:id', route);
 
 app.get('/:model', route);
 

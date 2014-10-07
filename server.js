@@ -206,8 +206,7 @@ function send (res) {
 }
 
 function route (req, res, next) {
-	var query = req.id ? req.model.findById(req.id) : req.model.find();
-	query.lean().exec()
+	req.findQuery.lean(true).exec()
 		.then(exists(res))
 		.then(req.model.autoPopulate({ lean: true }))
 		.then(makeRoot(req.model))
@@ -261,9 +260,15 @@ app.use('/:model', function (req, res, next) {
 	next();
 });
 
-app.get('/:model/:id', route);
+app.get('/:model/:id', function (req, res, next) {
+	req.findQuery = req.model.findById(req.id);
+	next();
+}, route);
 
-app.get('/:model', route);
+app.get('/:model', function (req, res, next) {
+	req.findQuery = req.model.find();
+	next();
+}, route);
 
 db.connect().then(function () {
 	app.listen(port, ip, function () {

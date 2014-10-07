@@ -117,8 +117,10 @@ function populatePaths (model) {
 		var options = path.options;
 		options = options.type && _.isArray(options.type) ? 
 			_.first(options.type) : options;
+
 		var pop = options.populate,
 			ref = options.ref;
+
 		if (pop && ref) res[key] = model.model(ref);
 	});
 }
@@ -129,39 +131,51 @@ function cleanNulls (object) {
 	});
 }
 
-var models;
-function populate (model) {
+/**
+ * Populates the invoked documents with as the given model.
+ * 
+ * @param  {Model} model  The model of the docs.
+ * @param  {[Model]} models  An array of previous models. Necessary
+ * to avoid circular references caused by recursion.
+ * @return {Promise}  A promise containing (recursed) population.
+ */
+function populate (model, models) {
+	models = models || [];
+	models.push(model.modelName);
 
+	// docs is either Array or Object
 	return function (docs) {
-		if (!docs) return docs;
-
 		var paths = populatePaths(model);
 
-		// remove paths of which are no ref, for objects.
-		if (!_.isArray(docs)) {
-			paths = _.transform(paths, function (res, value, key) {
-				if (docs[key]) res[key] = value;
-			});
-		}
+		// filter paths to populate.
+		paths = _.transform(paths, function (res, model, path) {
+			// only populate fields that actually exist
+			var exists = _.isArray(docs) || docs[path];
+
+			// don't populate previously populated models
+			if (!_.contains(models, model.modelName) && exists) {
+				res[path] = model;
+			}
+		});
 
 		var path = _.keys(paths).join(' '),
 			options = { lean: true };
 
-		// DO NOT USE DEPTH anymore! it remains in a session!!!!!
-		if (_.isEmpty(paths) || depth > 100) return docs;
+		if (_.isEmpty(paths)) return docs;
 
-		// when arrays have docs missing references, population prop is added as null.
-		depth ++;
 		return model.populate(docs, {
 			path: path,
 			options: options
-		}).then(function (docs) { // can be array or object
-			function recurse (doc) { // can be array or object
+		}).then(function (docs) {
+			function recurse (doc) {
+				// remove padded null values caused when populating an array of docs
 				doc = _.isArray(doc) ? doc.map(cleanNulls) : cleanNulls(doc);
-				// first clean object.
 
 				_.forIn(paths, function (value, key) {
-					if (!_.isUndefined(doc[key])) doc[key] = populate(value)(doc[key]);
+					if (!_.isUndefined(doc[key])) {
+						// recursively search for more fields to populate
+						doc[key] = populate(value, models)(doc[key]);
+					}
 				});
 				return RSVP.hash(doc);
 			}

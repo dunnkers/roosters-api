@@ -38,10 +38,10 @@ function AbstractSchema () {
 
 		// lesson-specific serialization
 		room: { type: String, ref: 'Room', populate: true },
-		teacher: { type: String, ref: 'Teacher' },
-		group: { type: String, ref: 'Group' },
+		teacher: { type: String, ref: 'Teacher', populate: true },
+		group: { type: String, ref: 'Group', populate: true },
 		subject: String,
-		cluster: { type: String, ref: 'Cluster' },
+		cluster: { type: String, ref: 'Cluster', populate: true },
 
 		// a lesson belongs to multiple schedules (many-to-many)
 		schedules: [ { type: Schema.Types.ObjectId, ref: 'Schedule' } ]

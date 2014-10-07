@@ -12,8 +12,7 @@ var Schema = new Schema({
 	}],
 	items: [{
 		type: String,
-		ref: 'Item',
-		populate: true
+		ref: 'Item'
 	}]
 });
 

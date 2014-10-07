@@ -206,11 +206,7 @@ function send (res) {
 }
 
 function route (req, res, next) {
-	var timeStr = format('%s%s retrieval', req.modelName, 
-		req.id ? format(' (%s)', req.id) : '');
-	console.time(timeStr);
-
-	var query = req.id ? req.model.findById(req.id) : req.model.find({ _id: { $in: [ "032", "13769", "10971", "Lafh", "11051", "327" ] } });
+	var query = req.id ? req.model.findById(req.id) : req.model.find();
 	query.lean().exec()
 		.then(exists(res))
 		.then(req.model.autoPopulate({ lean: true }))
@@ -221,10 +217,7 @@ function route (req, res, next) {
 		})
 		//.then(transform)
 		//.then(assemble)
-		.then(send(res))
-		.then(function () {
-		console.timeEnd(timeStr);
-	}, handleError(req, next));
+		.then(send(res), handleError(req, next));
 }
 
 function handleError (req, next) {
@@ -255,6 +248,18 @@ app.get('/items/:id', function (req, res, next) {
 		.then(transformDoc)
 		.then(sendItems(collections.items.modelName, res), handleError(req, next));
 });*/
+
+app.use('/:model', function (req, res, next) {
+	var timeStr = format('%s%s retrieval', req.modelName, 
+		req.id ? format(' (%s)', req.id) : '');
+	console.time(timeStr);
+
+	res.on('finish', function () {
+		console.timeEnd(timeStr);
+	});
+
+	next();
+});
 
 app.get('/:model/:id', route);
 

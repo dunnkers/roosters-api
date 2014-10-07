@@ -49,7 +49,7 @@ app.get('/', function (req, res, next) {
 });
 
 function transform (docs) {
-	return _.isArray(docs) ? docs.map(transformDoc) : transformDoc(doc);
+	return _.isArray(docs) ? docs.map(transformDoc) : transformDoc(docs);
 }
 
 function transformDoc (doc) {
@@ -131,7 +131,7 @@ function cleanNulls (object) {
 }
 
 /**
- * Populates the invoked documents with as the given model.
+ * Populates the invoked document(s) with as the given model.
  * 
  * @param  {Model} model  The model of the docs.
  * @param  {[Model]} models  An array of previous models. Necessary
@@ -149,7 +149,7 @@ function populate (model, models) {
 		// filter paths to populate.
 		paths = _.transform(paths, function (res, model, path) {
 			// only populate fields that actually exist
-			var exists = _.isArray(docs) || docs[path];
+			var exists = _.isArray(docs) || docs[path];// arr ? _.some(docs, path)
 
 			// don't populate previously populated models
 			if (!_.contains(models, model.modelName) && exists) {

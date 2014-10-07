@@ -53,8 +53,14 @@ function transform (docs) {
 }
 
 function transformDoc (doc) {
+	// return id the way ember wants it
 	doc.id = doc._id;
 	delete doc._id;
+
+	// remove empty arrays
+	doc = _.transform(doc, function (res, value, key) {
+		if (!(_.isArray(value) && _.isEmpty(value))) res[key] = value;
+	});
 
 	return doc;
 }
@@ -209,6 +215,7 @@ function route (req, res, next) {
 	req.model.find().lean().exec()
 		.then(exists(res))
 		.then(populate(req.model))
+		.then(transform)
 		.then(assemble)
 		.then(send(res))
 		.then(function () {

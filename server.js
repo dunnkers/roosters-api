@@ -56,6 +56,7 @@ function transformDoc (doc) {
 	// id instead of mongodb's _id
 	doc.id = doc._id;
 	delete doc._id;
+	delete doc.__v;
 
 	doc = _.transform(doc, function (res, value, key) {
 		// remove empty values and arrays
@@ -199,14 +200,15 @@ function send (res) {
 }
 
 function route (req, res, next) {
-	req.findQuery.lean(true).exec()
+	var select = req.model.schema.options.selection.self || '';
+	req.findQuery.select(select).lean(true).exec()
 		.then(exists(res))
 		.then(req.model.autoPopulate({ lean: true }))
-		.then(makeRoot(req.model))
+		/*.then(makeRoot(req.model))
 		.then(function (docs) {
 			// now that we're flat thanks to makeRoot, change the id.
 			return _.mapValues(docs, transform);
-		})
+		})*/
 		.then(send(res), function (err) {
 			var model = req.model ? format('[%s] ', req.model.modelName) : '',
 			id = req.id ? format(' (%s)', req.id) : '';

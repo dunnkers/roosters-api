@@ -24,6 +24,8 @@ function AbstractSchema () {
 	this.options.collection = 'items';
 	this.options.discriminatorKey = 'type';
 
+	this.options.select = { self: '-grade -index', population: '-__v -createdAt' };
+
 	// createdAt and updatedAt properties
 	this.plugin(timestamps);
 	// one-to-many relationship with schedule

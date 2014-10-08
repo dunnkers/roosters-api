@@ -76,7 +76,8 @@ module.exports = function (schema) {
 
 			return model.populate(docs, {
 				path: path.join(' '),
-				options: options
+				options: options,
+				select: model.schema.options.selection.population || ''
 			}).then(function (docs) {
 				function recurse (doc) {
 					// remove null values padded for which population failed.

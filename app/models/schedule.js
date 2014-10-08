@@ -25,4 +25,7 @@ Schema.plugin(relationship, {
 
 Schema.methods.fields = [ 'lessons' ];
 
+// overwrite selection to include updatedAt
+Schema.options.selection = { self: '-__v -createdAt' };
+
 mongoose.model('Schedule', Schema);

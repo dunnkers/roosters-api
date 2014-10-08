@@ -5,7 +5,6 @@ var mongoose = require('mongoose'),
 	_ = require('lodash');
 
 // attach plugins to global schema
-// -> promised save and upsert. upsert is dependent on promisedSave.
 var plugins = globSync('../plugins/**/*.js', { cwd: __dirname }).map(require);
 plugins.forEach(function (plugin) {
 	mongoose.plugin(plugin);

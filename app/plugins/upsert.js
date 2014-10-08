@@ -1,6 +1,6 @@
-var _ = require('lodash');
+var RSVP = require('rsvp'),
+	_ = require('lodash');
 
-// Dependent on the promisedSave plugin.
 module.exports = function (schema) {
 	/**
 	 * Upserts a given `document`.
@@ -24,6 +24,7 @@ module.exports = function (schema) {
 			var emptyArrays = _.pick(newDoc.toObject(), function(value, key) {
 				return _.isArray(value) && _.isEmpty(value)
 			});
+			
 			// duplicate from doc to newDoc
 			_.keys(emptyArrays).forEach(function (key) {
 				newDoc.set(key, doc[key]);
@@ -32,6 +33,25 @@ module.exports = function (schema) {
 			doc.set(newDoc);
 
 			return doc.promisedSave();
+		});
+	};
+
+	/**
+	 * Saves a document to the database, returning a promise.
+	 * @return {Promise} A Promise compliant with Promises/A+ specification.
+	 */
+	schema.methods.promisedSave = function () {
+		var self = this;
+
+		return new RSVP.Promise(function (resolve, reject) {
+			self.save(function (err, product, numberAffected) {
+				if (err) reject(err);
+
+				resolve({
+					product: product,
+					numberAffected: numberAffected
+				});
+			});
 		});
 	};
 };

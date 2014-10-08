@@ -184,32 +184,25 @@ function makeRoot (model, root) {
 	};
 }
 
-function exists (res) {
-	return function (docs) {
-		if (!docs || _.isEmpty(docs)) {
-			res.status(404).send('We couldn\'t find those, sorry!');
-		}
-		return docs;
-	}
-}
-
-function send (res) {
-	return function (root) {
-		res.send(root);
-	}
-}
-
 function route (req, res, next) {
 	var select = req.model.schema.options.selection.self || '';
 	req.findQuery.select(select).lean(true).exec()
-		.then(exists(res))
+		// docs exist
+		.then(function (docs) {
+			var empty = !docs || _.isEmpty(docs);
+			if (empty) res.status(404).send('We couldn\'t find those, sorry!');
+
+			return docs;
+		})
 		.then(req.model.autoPopulate({ lean: true }))
 		/*.then(makeRoot(req.model))
 		.then(function (docs) {
 			// now that we're flat thanks to makeRoot, change the id.
 			return _.mapValues(docs, transform);
 		})*/
-		.then(send(res), function (err) {
+		.then(function (root) {
+			res.send(root);
+		}, function (err) {
 			var model = req.model ? format('[%s] ', req.model.modelName) : '',
 			id = req.id ? format(' (%s)', req.id) : '';
 

@@ -8,7 +8,7 @@ var Schema = new Schema({
 		type: Schema.Types.ObjectId,
 		ref: 'Lesson',
 		childPath: 'schedules',
-		populate: true
+		populate: 'sideload'
 	}],
 	items: [{
 		type: String,

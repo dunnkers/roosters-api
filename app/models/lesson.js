@@ -37,11 +37,11 @@ function AbstractSchema () {
 		reserved: Boolean,
 
 		// lesson-specific serialization
-		room: { type: String, ref: 'Room', populate: true },
-		teacher: { type: String, ref: 'Teacher', populate: true },
-		group: { type: String, ref: 'Group', populate: true },
+		room: { type: String, ref: 'Room', populate: 'sideload' },
+		teacher: { type: String, ref: 'Teacher', populate: 'sideload' },
+		group: { type: String, ref: 'Group', populate: 'sideload' },
 		subject: String,
-		cluster: { type: String, ref: 'Cluster', populate: true },
+		cluster: { type: String, ref: 'Cluster', populate: 'sideload' },
 
 		// a lesson belongs to multiple schedules (many-to-many)
 		schedules: [ { type: Schema.Types.ObjectId, ref: 'Schedule' } ]

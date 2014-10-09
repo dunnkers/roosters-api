@@ -83,24 +83,22 @@ module.exports = function (schema) {
 			options: options,
 			select: model.schema.options.selection.population || ''
 		}).then(function (docs) {
+			function recursePopulated (doc) {
+				return _.transform(paths, function (res, model, path) {
+					// if ref was padded as null or somehow became undefined
+					if (_.isUndefined(doc[path]) || _.isNull(doc[path])) return false;
+
+					// recursively search for more fields to populate
+					res[path] = model.populateAll(doc[path], options, models);
+				});
+			}
+
 			function recurse (doc) {
 				// remove null values padded for which population failed.
-				doc = _.isArray(doc) ? doc.map(cleanNulls) : cleanNulls(doc);
+				doc = cleanNulls(doc);
 
-				// create hash of fields to populate (doc is not hashed to
-				// retain prototype)
-				return RSVP.hash(_.transform(paths, function (res, model, path) {
-					// if ref was padded as null or somehow became undefined
-					if (!_.isUndefined(doc[path]) && !_.isNull(doc[path])) {
-						// recursively search for more fields to populate
-						res[path] = model.populateAll(doc[path], options, models);
-					}
-				})).then(function (populated) {
-					// attach populated fields to doc
-					_.forIn(populated, function (value, path) {
-						doc[path] = value;
-					});
-
+				// recurse. properties are attached because object is synchronized.
+				return RSVP.hash(recursePopulated(doc)).then(function () {
 					return doc;
 				});
 			}

@@ -6,13 +6,14 @@ module.exports = function (schema) {
 	function populatePaths (model) {
 		return _.transform(model.schema.paths, function (res, path, key) {
 			var options = path.options;
-			options = options.type && _.isArray(options.type) ? 
-				_.first(options.type) : options;
 
-			var pop = options.populate,
-				ref = options.ref;
+			// for path arrays
+			if (options.type && _.isArray(options.type))
+				options = _.first(options.type);
 
-			if (pop && ref) res[key] = model.model(ref);
+			// path should have ref and populate property
+			if (options.ref && options.populate)
+				res[key] = model.model(options.ref);
 		});
 	}
 

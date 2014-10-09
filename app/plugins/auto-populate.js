@@ -27,13 +27,11 @@ module.exports = function (schema) {
 	}
 
 	/**
-	 * Populates the invoked document(s) with as the given model. If you don't
-	 * pass `lean: true` as an option, documents with 'missing' references will
-	 * have null values.
+	 * Populates the given document(s) recursively. Turn on population
+	 * for a field using either `populate: 'sideload'` or `populate: 'embed'`.
 	 * 
-	 * @param  {Model} model  The model of the docs.
 	 * @param {Object} options Options to pass to `Model.populate`.
-	 * @param  {[Model]} models  An array of previous models. Necessary
+	 * @param  {[String]} models  An array of previous models. Necessary
 	 * to avoid circular references caused by recursion.
 	 * @return {Promise}  A promise containing (recursed) population.
 	 */

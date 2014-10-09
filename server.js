@@ -194,7 +194,9 @@ function route (req, res, next) {
 
 			return docs;
 		})
-		.then(req.model.autoPopulate({ lean: true }))
+		.then(function (docs) {
+			return req.model.autoPopulate(docs, { lean: true });
+		})
 		/*.then(makeRoot(req.model))
 		.then(function (docs) {
 			// now that we're flat thanks to makeRoot, change the id.

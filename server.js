@@ -195,7 +195,7 @@ function route (req, res, next) {
 			return docs;
 		})
 		.then(function (docs) {
-			return req.model.autoPopulate(docs, { lean: true });
+			return req.model.populateAll(docs, { lean: true });
 		})
 		/*.then(makeRoot(req.model))
 		.then(function (docs) {

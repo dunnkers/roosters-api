@@ -35,7 +35,7 @@ module.exports = function (schema) {
 	 * to avoid circular references caused by recursion.
 	 * @return {Promise}  A promise containing (recursed) population.
 	 */
-	schema.statics.autoPopulate = function (docs, options, models) {
+	schema.statics.populateAll = function (docs, options, models) {
 		var model = this;
 
 		models = models || [];
@@ -86,7 +86,7 @@ module.exports = function (schema) {
 					// if ref was padded as null or somehow became undefined
 					if (!_.isUndefined(doc[path]) && !_.isNull(doc[path])) {
 						// recursively search for more fields to populate
-						res[path] = model.autoPopulate(doc[path], options, models);
+						res[path] = model.populateAll(doc[path], options, models);
 					}
 				})).then(function (populated) {
 					// attach populated fields to doc

@@ -3,7 +3,16 @@ var _ = require('lodash'),
 
 module.exports = function (schema) {
 
-	function populatePaths (model) {
+	/**
+	 * Returns the paths to populate for this model. Populate a path
+	 * by setting `populate: 'sideload' | 'embed'`.
+	 * 
+	 * @param  {Model} model  The Mongoose model.
+	 * @return {Object}  An object with as keys the paths, and as values the models.
+	 */
+	schema.statics.populatePaths = function () {
+		var model = this;
+
 		return _.transform(model.schema.paths, function (res, path, key) {
 			var options = path.options;
 
@@ -46,7 +55,7 @@ module.exports = function (schema) {
 		if (!_.contains(models, model.modelName)) models.push(model.modelName);
 
 		// docs is either Array or Object
-		var paths = populatePaths(model);
+		var paths = model.populatePaths();
 
 		// filter paths to populate
 		paths = _.transform(paths, function (res, model, path) {

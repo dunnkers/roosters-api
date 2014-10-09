@@ -7,7 +7,6 @@ module.exports = function (schema) {
 	 * Returns the paths to populate for this model. Populate a path
 	 * by setting `populate: 'sideload' | 'embed'`.
 	 * 
-	 * @param  {Model} model  The Mongoose model.
 	 * @return {Object}  An object with as keys the paths, and as values the models.
 	 */
 	schema.statics.populatePaths = function () {
@@ -39,7 +38,8 @@ module.exports = function (schema) {
 	/**
 	 * Populates the given document(s) recursively. Turn on population
 	 * for a field using either `populate: 'sideload'` or `populate: 'embed'`.
-	 * 
+	 *
+	 * @param {Object | Array} docs  A document, or array of docs.
 	 * @param {Object} options Options to pass to `Model.populate`.
 	 * @param  {[String]} models  An array of previous models. Necessary
 	 * to avoid circular references caused by recursion.
@@ -54,17 +54,14 @@ module.exports = function (schema) {
 		// avoid following circular references by keeping a register of (parent) models
 		if (!_.contains(models, model.modelName)) models.push(model.modelName);
 
-		// docs is either Array or Object
-		var paths = model.populatePaths();
-
 		// filter paths to populate
-		paths = _.transform(paths, function (res, model, path) {
+		var paths = _.transform(model.populatePaths(), function (res, model, path) {
 			// don't populate previously populated models
 			if (_.contains(models, model.modelName)) return false;
 
 			// only populate fields that actually exist
-			var exists = _.isArray(docs) ? _.some(docs, path) : docs[path];
-			if (exists) res[path] = model;
+			if (_.isArray(docs) ? _.some(docs, path) : docs[path])
+				res[path] = model;
 		});
 
 		if (_.isEmpty(paths)) return docs;

@@ -1,7 +1,17 @@
 var _ = require('lodash'),
-	RSVP = require('rsvp');
+	RSVP = require('rsvp'),
+	utils = require('mongoose/lib/utils');
 
 module.exports = function (schema) {
+
+	// easier accessors
+	schema.statics.plural = function () {
+		return this.collection.name;	
+	};
+
+	schema.statics.singular = function () {
+		return this.modelName.toLowerCase();	
+	};
 
 	/**
 	 * Returns the paths to populate for this model. Populate a path
@@ -68,7 +78,7 @@ module.exports = function (schema) {
 
 		var path = _.keys(paths);
 
-		// do not populate docs that do not have any of the paths
+		// only populate docs that have any of the paths
 		// -> this makes for a slightly better performance
 		var merge = [];
 		docs = _.isArray(docs) ? _.transform(docs, function (res, doc) {

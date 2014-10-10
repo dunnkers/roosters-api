@@ -97,8 +97,8 @@ module.exports = function (schema) {
 		}).then(function (docs) {
 			function recursePopulated (doc) {
 				return _.transform(paths, function (res, model, path) {
-					// if ref was padded as null or somehow became undefined
-					if (_.isUndefined(doc[path]) || _.isNull(doc[path])) return false;
+					// if this doc didn't have the ref for the populated path
+					if (_.isUndefined(doc[path])) return false;
 
 					// recursively search for more fields to populate
 					res[path] = model.populateAll(doc[path], options, root, models);

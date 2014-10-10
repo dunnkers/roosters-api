@@ -115,10 +115,19 @@ module.exports = function (schema) {
 				});
 			}
 
+			function send () {
+				if (initiator && !_.isEmpty(root)) {
+					root[_.isArray(docs) ? model.plural() : model.singular()] = docs;
+					return root;
+				}
+
+				return docs;
+			}
+
 			if (_.isArray(docs))
-				return RSVP.all(docs.map(recurse).concat(merge));
+				return RSVP.all(docs.map(recurse).concat(merge)).then(send);
 			else
-				return recurse(docs);
+				return recurse(docs).then(send);
 		});
 	};
 };

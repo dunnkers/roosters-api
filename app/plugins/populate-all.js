@@ -55,11 +55,13 @@ module.exports = function (schema) {
 	 * to avoid circular references caused by recursion.
 	 * @return {Promise}  A promise containing (recursed) population.
 	 */
-	schema.statics.populateAll = function (docs, options, models) {
-		var model = this;
+	schema.statics.populateAll = function (docs, options, root, models) {
+		var model = this,
+			initiator = !root;
 
-		models = models || [];
 		options = options || {};
+		root = root || {};
+		models = models || [];
 
 		// avoid following circular references by keeping a register of (parent) models
 		if (!_.contains(models, model.modelName)) models.push(model.modelName);
@@ -99,7 +101,7 @@ module.exports = function (schema) {
 					if (_.isUndefined(doc[path]) || _.isNull(doc[path])) return false;
 
 					// recursively search for more fields to populate
-					res[path] = model.populateAll(doc[path], options, models);
+					res[path] = model.populateAll(doc[path], options, root, models);
 				});
 			}
 

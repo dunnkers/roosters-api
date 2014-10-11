@@ -184,12 +184,16 @@ function makeRoot (model, root) {
 	};
 }
 
+function notFound (res) {
+	res.status(404).send('We couldn\'t find those, sorry!');
+}
+
 function route (req, res, next) {
 	var select = req.model.schema.options.selection.self || '';
 	req.findQuery.select(select).lean(true).exec()
 		// docs exist
 		.then(function (docs) {
-			var empty = !docs || _.isEmpty(docs);
+			if (!docs || _.isEmpty(docs)) notFound(res);
 			if (empty) res.status(404).send('We couldn\'t find those, sorry!');
 
 			return docs;
@@ -205,8 +209,7 @@ function route (req, res, next) {
 		.then(function (root) {
 			res.send(root);
 		}, function (err) {
-			if (err.name === 'CastError')
-				return res.status(404).send('We couldn\'t find those, sorry!');
+			if (err.name === 'CastError') return notFound(res);
 
 			var model = req.model ? format('[%s] ', req.model.modelName) : '',
 			id = req.id ? format(' (%s)', req.id) : '';

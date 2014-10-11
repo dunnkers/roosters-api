@@ -205,6 +205,9 @@ function route (req, res, next) {
 		.then(function (root) {
 			res.send(root);
 		}, function (err) {
+			if (err.name === 'CastError')
+				return res.status(404).send('We couldn\'t find those, sorry!');
+
 			var model = req.model ? format('[%s] ', req.model.modelName) : '',
 			id = req.id ? format(' (%s)', req.id) : '';
 

@@ -193,8 +193,10 @@ function route (req, res, next) {
 	req.findQuery.select(select).lean(true).exec()
 		// docs exist
 		.then(function (docs) {
-			if (!docs || _.isEmpty(docs)) notFound(res);
-			if (empty) res.status(404).send('We couldn\'t find those, sorry!');
+			if (!docs || _.isEmpty(docs)) {
+				notFound(res);
+				throw new Error('not found');
+			}
 
 			return docs;
 		})
@@ -209,7 +211,8 @@ function route (req, res, next) {
 		.then(function (root) {
 			res.send(root);
 		}, function (err) {
-			if (err.name === 'CastError') return notFound(res);
+			if (err.name === 'CastError' || err.message === 'not found')
+				return notFound(res);
 
 			var model = req.model ? format('[%s] ', req.model.modelName) : '',
 			id = req.id ? format(' (%s)', req.id) : '';

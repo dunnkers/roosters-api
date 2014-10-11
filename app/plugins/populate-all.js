@@ -16,22 +16,36 @@ module.exports = function (schema) {
 	/**
 	 * Returns the paths to populate for this model. Populate a path
 	 * by setting `populate: 'sideload' | 'embed'`.
-	 * 
-	 * @return {Object}  An object with as keys the paths, and as values the models.
+	 *
+	 * @param {Object|Array} docs Optionally, filter by path existance in these docs.
+	 * @param {Array} models Optionally filter by (these) circular model references.
+	 * @return {Object}  An object with the paths.
 	 */
-	schema.statics.populatePaths = function () {
+	schema.statics.populatePaths = function (docs, models) {
 		var model = this;
 
-		return _.transform(model.schema.paths, function (res, path, key) {
-			var options = path.options;
+		return _.transform(_.pick(model.schema.paths, function (pathType, path) {
+			var options = pathType.options;
 
 			// for path arrays
-			if (options.type && _.isArray(options.type))
+			if (options.type && _.isArray(options.type)) {
 				options = _.first(options.type);
+				pathType.options = options;
+			}
 
 			// path should have ref and populate property
-			if (options.ref && options.populate)
-				res[key] = model.model(options.ref);
+			if (!(options.ref && options.populate)) return false;
+
+			// don't populate previously populated (circular) models
+			var pathModel = model.model(options.ref);
+
+			if (models && _.contains(models, pathModel.modelName)) return false;
+
+			// only populate fields that actually exist
+			return docs ? (_.isArray(docs) ? _.some(docs, path) : docs[path]) : true;
+		}), function (res, pathType, path) {
+			// only return options since we only need those.
+			res[path] = pathType.options;
 		});
 	}
 
@@ -67,14 +81,7 @@ module.exports = function (schema) {
 		if (!_.contains(models, model.modelName)) models.push(model.modelName);
 
 		// filter paths to populate
-		var paths = _.transform(model.populatePaths(), function (res, model, path) {
-			// don't populate previously populated models
-			if (_.contains(models, model.modelName)) return false;
-
-			// only populate fields that actually exist
-			if (_.isArray(docs) ? _.some(docs, path) : docs[path])
-				res[path] = model;
-		});
+		var paths = model.populatePaths(docs, models);
 
 		if (_.isEmpty(paths)) return docs;
 
@@ -96,12 +103,13 @@ module.exports = function (schema) {
 			select: model.schema.options.selection.population || ''
 		}).then(function (docs) {
 			function recursePopulated (doc) {
-				return _.transform(paths, function (res, model, path) {
+				return _.transform(paths, function (res, pathType, path) {
 					// if this doc didn't have the ref for the populated path
 					if (_.isUndefined(doc[path])) return false;
 
 					// recursively search for more fields to populate
-					res[path] = model.populateAll(doc[path], options, root, models);
+					var pathModel = model.model(pathType.ref);
+					res[path] = pathModel.populateAll(doc[path], options, root, models);
 				});
 			}
 

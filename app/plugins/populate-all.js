@@ -98,59 +98,60 @@ module.exports = function (schema) {
 				res.push(doc);
 		}) : docs;
 
+		// recurses the populated paths of a doc.
+		function recurse (doc) {
+			// remove null values padded for which population failed.
+			doc = cleanNulls(doc);
+
+			var populatePaths = _.pick(paths, function (pathType, path) {
+				// if this doc didn't have the ref for the populated path
+				return !_.isUndefined(doc[path]);
+			});
+
+			// map the recursive paths to populate before it is set to id.
+			var toPopulate = _.mapValues(populatePaths, function (pathType, path) {
+				// recursively search for more fields to populate
+				return pathType.model.populateAll(doc[path], options, root, models);
+			});
+
+			// attach populated paths to root, if sideload
+			_.forIn(populatePaths, function (pathType, path) {
+				if (!(pathType.populate === 'sideload')) return;
+
+				var key = model.model(pathType.ref).plural();
+
+				if (!root[key])
+					root[key] = [];
+
+				function push (doc) {
+					// push if not already in array
+					if (!_.some(root[key], { '_id': doc._id }))
+						root[key].push(doc);
+				}
+
+				// attach to root and set ref to id.
+				if (_.isArray(doc[path])) {
+					doc[path].forEach(push);
+					doc[path] = doc.populated ? 
+						doc.populated(path) : _.pluck(doc[path], '_id');
+				} else {
+					push(doc[path]);
+					doc[path] = doc.populated ? 
+						doc.populated(path) : doc[path]._id;
+				}
+			});
+
+			// recurse. properties are attached because object is synchronized.
+			return RSVP.hash(toPopulate).then(function () {
+				return doc;
+			});
+		}
+
 		return model.populate(docs, {
 			path: path.join(' '),
 			options: options,
 			select: model.schema.options.selection.population || ''
 		}).then(function (docs) {
-			function recurse (doc) {
-				// remove null values padded for which population failed.
-				doc = cleanNulls(doc);
-
-				var populatePaths = _.pick(paths, function (pathType, path) {
-					// if this doc didn't have the ref for the populated path
-					return !_.isUndefined(doc[path]);
-				});
-
-				// map the recursive paths to populate before it is set to id.
-				var toPopulate = _.mapValues(populatePaths, function (pathType, path) {
-					// recursively search for more fields to populate
-					return pathType.model.populateAll(doc[path], options, root, models);
-				});
-
-				// attach populated paths to root, if sideload
-				_.forIn(populatePaths, function (pathType, path) {
-					if (!(pathType.populate === 'sideload')) return;
-
-					var key = model.model(pathType.ref).plural();
-
-					if (!root[key])
-						root[key] = [];
-
-					function push (doc) {
-						// push if not already in array
-						if (!_.some(root[key], { '_id': doc._id }))
-							root[key].push(doc);
-					}
-
-					// attach to root and set ref to id.
-					if (_.isArray(doc[path])) {
-						doc[path].forEach(push);
-						doc[path] = doc.populated ? 
-							doc.populated(path) : _.pluck(doc[path], '_id');
-					} else {
-						push(doc[path]);
-						doc[path] = doc.populated ? 
-							doc.populated(path) : doc[path]._id;
-					}
-				});
-
-				// recurse. properties are attached because object is synchronized.
-				return RSVP.hash(toPopulate).then(function () {
-					return doc;
-				});
-			}
-
 			function send () {
 				if (initiator && !_.isEmpty(root)) {
 					root[_.isArray(docs) ? model.plural() : model.singular()] = docs;

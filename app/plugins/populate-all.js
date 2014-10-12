@@ -38,6 +38,7 @@ module.exports = function (schema) {
 
 			// don't populate previously populated (circular) models
 			var pathModel = model.model(options.ref);
+			options.model = pathModel;
 
 			if (models && _.contains(models, pathModel.modelName)) return false;
 
@@ -108,8 +109,7 @@ module.exports = function (schema) {
 					if (_.isUndefined(doc[path])) return false;
 
 					// recursively search for more fields to populate
-					var pathModel = model.model(pathType.ref);
-					res[path] = pathModel.populateAll(doc[path], options, root, models);
+					res[path] = pathType.model.populateAll(doc[path], options, root, models);
 				});
 			}
 

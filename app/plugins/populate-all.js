@@ -6,7 +6,7 @@ module.exports = function (schema) {
 
 	// easier accessors
 	schema.statics.plural = function () {
-		return this.collection.name;	
+		return utils.toCollectionName(this.modelName);	
 	};
 
 	schema.statics.singular = function () {

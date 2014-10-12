@@ -118,7 +118,7 @@ module.exports = function (schema) {
 			_.forIn(populatePaths, function (pathType, path) {
 				if (!(pathType.populate === 'sideload')) return;
 
-				var key = model.model(pathType.ref).plural();
+				var key = pathType.model.plural();
 
 				if (!root[key])
 					root[key] = [];

@@ -10,9 +10,9 @@ module.exports = function (schema) {
 	 * @return {Promise}        A Promise, returned from the promisedSave plugin.
 	 */
 	schema.statics.upsert = function (newDoc) {
-		var query = newDoc.fields ? 
-			_.pick(newDoc.toObject(), newDoc.fields) : 
-			{ _id: newDoc._id };
+		var fields = this.schema.options.fields,
+			query = fields ? _.pick(newDoc.toObject(), fields) :  { _id: newDoc._id };
+			
 		return this.findOne(query).exec().then(function (doc) {
 			// this part is easy. if no document found, just save.
 			if (!doc) return newDoc.promisedSave();

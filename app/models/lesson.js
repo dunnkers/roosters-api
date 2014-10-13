@@ -48,7 +48,7 @@ function AbstractSchema () {
 	});
 
 	// fields that determine a unique lesson. these are used to query.
-	this.methods.fields = [ 'day', 'index', 
+	this.options.fields = [ 'day', 'index', 
 						'empty', 'between', 'reserved',
 						'room', 'teacher', 'subject' ];
 

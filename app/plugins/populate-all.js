@@ -77,16 +77,15 @@ module.exports = function (schema) {
 	 * for a field using either `populate: 'sideload'` or `populate: 'embed'`.
 	 *
 	 * @param {Object | Array} docs  A document, or array of docs.
-	 * @param {Object} options Options to pass to `Model.populate`.
+	 * @param {Object} root The root. Other documents are attached to this object.
 	 * @param  {[String]} models  An array of previous models. Necessary
 	 * to avoid circular references caused by recursion.
 	 * @return {Promise}  A promise containing (recursed) population.
 	 */
-	schema.statics.populateAll = function (docs, options, root, models) {
+	schema.statics.populateAll = function (docs, root, models) {
 		var model = this,
 			initiator = !root;
 
-		options = options || {};
 		root = root || {};
 		models = models || [];
 
@@ -123,7 +122,7 @@ module.exports = function (schema) {
 			// map the recursive paths to populate before it is set to id.
 			var toPopulate = _.mapValues(populatePaths, function (pathType, path) {
 				// recursively search for more fields to populate
-				return pathType.model.populateAll(doc[path], options, root, models);
+				return pathType.model.populateAll(doc[path], root, models);
 			});
 
 			// attach populated paths to root, if sideload

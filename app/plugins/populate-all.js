@@ -109,6 +109,16 @@ module.exports = function (schema) {
 				res.push(doc);
 		}) : docs;
 
+		function send (docs) {
+			var sendRoot = attach || !_.isEmpty(root);
+			if (initiator && sendRoot) {
+				root[_.isArray(docs) ? model.plural() : model.singular()] = docs;
+				return root;
+			}
+
+			return docs;
+		}
+
 		// recurses the populated paths of a doc.
 		function recurse (doc) {
 			// remove null values padded for which population failed.
@@ -160,15 +170,6 @@ module.exports = function (schema) {
 		}
 
 		return model.populate(docs, _.pluck(paths, 'options')).then(function (docs) {
-			function send () {
-				if (initiator && !_.isEmpty(root)) {
-					root[_.isArray(docs) ? model.plural() : model.singular()] = docs;
-					return root;
-				}
-
-				return docs;
-			}
-
 			if (_.isArray(docs))
 				return RSVP.all(docs.map(recurse).concat(merge)).then(send);
 			else

@@ -150,7 +150,7 @@ module.exports = function (schema) {
 
 				function push (doc) {
 					// push if not already in array
-					if (!_.some(root[key], { '_id': doc._id }))
+					if (!_.some(root[key], { '_id': doc._id }) && doc._id)
 						root[key].push(doc);
 				}
 

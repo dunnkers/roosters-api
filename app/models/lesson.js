@@ -15,8 +15,8 @@ function w (str) {
  * Removes falsy values off an object.
  */
 function clean (object) {
-	return _.transform(object, function (res, value, key) {
-		if (value) res[key] = value;
+	return _.pick(object, function (value) {
+		return value;
 	});
 }
 
@@ -81,9 +81,9 @@ function AbstractSchema () {
 				var found = {};
 
 				// should leave subject
-				lesson.content = _.transform(lesson.content, function (res, value, key) {
+				lesson.content = _.pick(lesson.content, function (value) {
 					// loop all items
-					if (_.isEmpty(_.filter(items, function (distinctions, key) {
+					return _.isEmpty(_.filter(items, function (distinctions, key) {
 						// check if value is one of them
 						return distinctions.filter(function (distinction) {
 							if (_.contains(value, distinction)) {
@@ -92,9 +92,7 @@ function AbstractSchema () {
 								return true;
 							}
 						}).length > 0;
-					}))) {
-						res[key] = value;
-					}
+					}));
 				});
 
 				/* VALIDATE */

@@ -129,7 +129,7 @@ function route (req, res, next) {
 			return docs;
 		})
 		.then(function (docs) {
-			return req.model.populateAll(docs);
+			return req.model.populateAll(docs, true);
 		})
 		/*.then(makeRoot(req.model))
 		.then(function (docs) {

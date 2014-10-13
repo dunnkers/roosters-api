@@ -48,25 +48,6 @@ app.get('/', function (req, res, next) {
 	res.send('Roosters-API');
 });
 
-function transform (docs) {
-	return _.isArray(docs) ? docs.map(transformDoc) : transformDoc(docs);
-}
-
-function transformDoc (doc) {
-	// id instead of mongodb's _id
-	doc.id = doc._id;
-	delete doc._id;
-	delete doc.__v;
-
-	doc = _.transform(doc, function (res, value, key) {
-		// remove empty values and arrays
-		var empty = (_.isArray(value) || _.isString(value)) && _.isEmpty(value);
-		if (!empty) res[key] = value;
-	});
-
-	return doc;
-}
-
 /*
  * Wrap polymorphic models.
  * -> works only with lean models!
@@ -131,11 +112,6 @@ function route (req, res, next) {
 		.then(function (docs) {
 			return req.model.populateAll(docs, true);
 		})
-		/*.then(makeRoot(req.model))
-		.then(function (docs) {
-			// now that we're flat thanks to makeRoot, change the id.
-			return _.mapValues(docs, transform);
-		})*/
 		.then(function (root) {
 			res.send(root);
 		}, function (err) {

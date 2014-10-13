@@ -1,20 +1,8 @@
 var _ = require('lodash');
 
 module.exports = function (schema) {
-	// unless overwritten, set defaults for a select option in this models' populations.
-	var str = '-__v -createdAt -updatedAt ',
-		select = schema.options.select;
-
-	var res = { self: str, population: str };
-
-	if (select)
-		if (_.isString(select)) {
-			res.self += select;
-		} else if (_.isObject(select)) {
-			res.population =  select.population || res.self;
-			if (select.self) res.self += select.self;
-		}
-
+	// unless overwritten, set defaults for a select option in this models' populations
 	if (!schema.options.selection)
-		schema.options.selection = res;
+		str = schema.options.select || '';
+		schema.options.selection = '-__v -createdAt ' + str;
 };

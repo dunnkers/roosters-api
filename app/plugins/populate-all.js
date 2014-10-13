@@ -149,8 +149,7 @@ module.exports = function (schema) {
 
 		return model.populate(docs, {
 			path: path.join(' '),
-			options: options,
-			select: model.schema.options.selection.population || ''
+			options: options
 		}).then(function (docs) {
 			function send () {
 				if (initiator && !_.isEmpty(root)) {

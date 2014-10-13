@@ -14,5 +14,11 @@ module.exports = function (schema) {
 	schema.options.toJSON.transform = function (doc, ret, options) {
 		ret.id = ret._id;
 		delete ret._id;
+
+		// remove empty values and arrays
+		_.forIn(ret, function (value, key) {
+			if ((_.isArray(value) || _.isString(value)) && _.isEmpty(value))
+				delete ret[key];
+		});
 	};
 };

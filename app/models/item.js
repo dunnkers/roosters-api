@@ -24,6 +24,9 @@ function AbstractSchema () {
 	this.options.collection = 'items';
 	this.options.discriminatorKey = 'type';
 
+	// overwrite selection to delete index, 
+	this.options.select = '-__v -createdAt -updatedAt -index -grade';
+
 	// createdAt and updatedAt properties
 	this.plugin(timestamps);
 	// one-to-many relationship with schedule

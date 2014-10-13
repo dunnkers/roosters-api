@@ -13,6 +13,13 @@ module.exports = function (schema) {
 		return this.modelName.toLowerCase();	
 	};
 
+	schema.statics.queryOptions = function () {
+		// query options - http://mongoosejs.com/docs/api.html#query_Query-setOptions
+		return _.pick(this.schema.options, 'tailable', 'sort', 'limit', 'skip', 
+			'maxscan', 'batchSize', 'comment', 'snapshot', 'hint', 'slaveOk', 
+			'lean', 'safe');
+	}
+
 	/**
 	 * Returns the paths to populate for this model. Populate a path
 	 * by setting `populate: 'sideload' | 'embed'`.
@@ -41,6 +48,11 @@ module.exports = function (schema) {
 			options.model = pathModel;
 
 			if (models && _.contains(models, pathModel.modelName)) return false;
+
+			// include query options set on schema options.
+			options.options = _.pick(pathModel.schema.options, 'select', 'match');
+			options.options.path = path;
+			options.options.options = pathModel.queryOptions();
 
 			// only populate fields that actually exist
 			return docs ? (_.isArray(docs) ? _.some(docs, path) : docs[path]) : true;
@@ -132,6 +144,7 @@ module.exports = function (schema) {
 				// attach to root and set ref to id.
 				if (_.isArray(doc[path])) {
 					doc[path].forEach(push);
+					// use cached ids if possible.
 					doc[path] = doc.populated ? 
 						doc.populated(path) : _.pluck(doc[path], '_id');
 				} else {
@@ -147,10 +160,7 @@ module.exports = function (schema) {
 			});
 		}
 
-		return model.populate(docs, {
-			path: path.join(' '),
-			options: options
-		}).then(function (docs) {
+		return model.populate(docs, _.pluck(paths, 'options')).then(function (docs) {
 			function send () {
 				if (initiator && !_.isEmpty(root)) {
 					root[_.isArray(docs) ? model.plural() : model.singular()] = docs;

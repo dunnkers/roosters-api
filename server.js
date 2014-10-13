@@ -116,11 +116,9 @@ function notFound (res) {
 }
 
 function route (req, res, next) {
-	var lean = true,
-		select = req.model.schema.options.selection || '';
+	var select = req.model.schema.options.select || '';
 
-
-	req.findQuery.select(select).lean(lean).exec()
+	req.findQuery.select(select).setOptions(req.model.queryOptions()).exec()
 		// docs exist
 		.then(function (docs) {
 			if (!docs || _.isEmpty(docs)) {
@@ -131,7 +129,7 @@ function route (req, res, next) {
 			return docs;
 		})
 		.then(function (docs) {
-			return req.model.populateAll(docs, { lean: lean });
+			return req.model.populateAll(docs);
 		})
 		/*.then(makeRoot(req.model))
 		.then(function (docs) {

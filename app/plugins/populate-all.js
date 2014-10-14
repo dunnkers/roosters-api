@@ -58,6 +58,28 @@ module.exports = function (schema) {
 		// -> in some cases, this doc is already transformed. check for `id`'s as well.
 		var populated = _.isArray(docs) ? _.pluck(docs, '_id') : docs._id;
 
+		// fix polymorphic reference
+		if (model.discriminators) {
+			function ref (doc) {
+				var typeKey = model.schema.options.discriminatorKey,
+					idKey = doc._id ? '_id' : 'id';
+					res = _.pick(doc, idKey, typeKey);
+
+				// if no type, not a polymorphic model
+				if (!doc[typeKey]) return doc._id;
+
+				if (doc.toJSON) { // not lean
+					// create new model of corresponding type to bind typeKey
+					return new model.discriminators[doc[typeKey]](res);
+				} else { // lean
+					//model.middleware(res);
+					return res;
+				}
+			}
+
+			populated = _.isArray(docs) ? docs.map(ref) : ref(docs);
+		}
+
 		// attach to root and set ref to id.
 		if (_.isArray(docs))
 			docs.forEach(push);

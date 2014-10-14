@@ -8,7 +8,7 @@ module.exports = function (schema) {
 	 *
 	 * @return {Object}  An object with the paths.
 	 */
-	schema.statics.populatePaths = function (docs, models) {
+	schema.statics.populatePaths = function () {
 		var model = this;
 
 		return _.transform(_.pick(model.schema.paths, function (pathType, path) {

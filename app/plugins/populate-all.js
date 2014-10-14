@@ -33,6 +33,10 @@ module.exports = function (schema) {
 		return object;
 	}
 
+	/**
+	 * Executed before sending model back to recursion.
+	 * @return {Object|String}  Either the ref(s) or documents.
+	 */
 	schema.statics.attach = function (docs, sideload, root) {
 		if (!sideload) return null;
 
@@ -106,7 +110,7 @@ module.exports = function (schema) {
 	 */
 	schema.statics.populateAll = function (docs, sideload, root, models) {
 		var model = this,
-			initiator = !root;
+			endpoint = !root;
 
 		root = root || {};
 		models = models || [];
@@ -136,7 +140,7 @@ module.exports = function (schema) {
 
 		function send (docs) {
 			// attach populated paths to root, if sideload
-			if (!initiator) {
+			if (!endpoint) {
 				var res = model.attach(docs, sideload, root);
 				if (res) return res;
 			}
@@ -149,8 +153,8 @@ module.exports = function (schema) {
 			else
 				model.middleware(docs);
 
-			// sideload initiator
-			if (initiator && (sideload || !_.isEmpty(root))) {
+			// sideload endpoint
+			if (endpoint && (sideload || !_.isEmpty(root))) {
 				var key = _.isArray(docs) ? model.plural() : model.singular();
 				root[key] = docs;
 

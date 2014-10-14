@@ -23,9 +23,7 @@ Schema.plugin(relationship, {
 	relationshipPathName: 'lessons'
 });
 
-Schema.options.fields = [ 'day', 'index', 
-					'empty', 'between', 'reserved',
-					'room', 'teacher', 'subject' ];
+Schema.options.fields = [ 'lessons' ];
 
 // overwrite selection to include updatedAt
 Schema.options.select = '-__v -createdAt';

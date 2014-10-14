@@ -152,6 +152,28 @@ module.exports = function (schema) {
 
 			// sideload endpoint
 			if (endpoint && (sideload || !_.isEmpty(root))) {
+				// wrap polymorphic models
+				if (model.discriminators && model.schema.options.wrapPolymorphic) {
+					function wrap (doc) {
+						// [!] check for typeKey existance.
+						// [!] converge with attach's methods for doing this.
+						var typeKey = model.schema.options.discriminatorKey,
+							realModel = model.discriminators[doc[typeKey]];
+
+						var res = { _id: doc._id || doc.id };
+						// [!] doc _id might be transformed to id
+						// when passing realModel instead of model, model 
+						// doesn't contain discriminators.
+						// -> maybe put an option `force`.
+						res[model.singular()] = realModel.attach(doc, root);
+						// [!] needs transform.
+
+						return res;
+					}
+
+					docs = _.isArray(docs) ? docs.map(wrap) : wrap(docs);
+				}
+
 				var key = _.isArray(docs) ? model.plural() : model.singular();
 				root[key] = docs;
 

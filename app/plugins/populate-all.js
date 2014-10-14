@@ -43,6 +43,11 @@ module.exports = function (schema) {
 
 		function push (doc) {
 			// push if not already in array
+			/* -regarding already transformed synchronous objects- */
+			/* in some cases, doc might not have an _id but an id  *
+			 * because of a transform. in this case we can be sure *
+			 * that this object already has been added to our root,*
+			 * because else it wouldn't have been transformed.	   */
 			if (doc._id && !_.some(root[key], { _id: doc._id })) {
 				model.middleware(doc);
 				root[key].push(doc);
@@ -50,6 +55,7 @@ module.exports = function (schema) {
 		}
 
 		// extract id(s) from document(s) to set as reference
+		// -> in some cases, this doc is already transformed. check for `id`'s as well.
 		var populated = _.isArray(docs) ? _.pluck(docs, '_id') : docs._id;
 
 		// attach to root and set ref to id.

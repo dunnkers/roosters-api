@@ -111,12 +111,35 @@ module.exports = function (schema) {
 		}) : docs;
 
 		function send (docs) {
-			//docs = _.isArray(docs) ? docs.map(middleware) : middleware(docs);
-
 			var sendRoot = sideload || !_.isEmpty(root);
 			if (initiator && sendRoot) {
 				root[_.isArray(docs) ? model.plural() : model.singular()] = docs;
 				return root;
+			}
+
+			// attach populated paths to root, if sideload
+			if (sideload) {
+				var key = model.plural();
+
+				root[key] = root[key] || [];
+
+				function push (doc) {
+					// push if not already in array
+					if (!_.some(root[key], { '_id': doc._id }) && doc._id)
+						root[key].push(doc);
+				}
+
+				// attach to root and set ref to id.
+				if (_.isArray(docs)) {
+					docs.forEach(push);
+					// use cached ids if possible.
+					return docs.populated ? 
+						docs.populated(path) : _.pluck(docs, '_id');
+				} else {
+					push(docs);
+					return docs.populated ? 
+						docs.populated(path) : docs._id;
+				}
 			}
 
 			return docs;
@@ -135,48 +158,22 @@ module.exports = function (schema) {
 			// map the recursive paths to populate before it is set to id.
 			var toPopulate = _.mapValues(populatePaths, function (pathType, path) {
 				// recursively search for more fields to populate
-				return pathType.model.populateAll(doc[path], false, root, models);
-			});
-
-			// attach populated paths to root, if sideload
-			_.forIn(populatePaths, function (pathType, path) {
-				if (!(pathType.populate === 'sideload')) return;
-
-				var key = pathType.model.plural();
-
-				if (!root[key])
-					root[key] = [];
-
-				function push (doc) {
-					// push if not already in array
-					if (!_.some(root[key], { '_id': doc._id }) && doc._id)
-						root[key].push(doc);
-				}
-
-				// attach to root and set ref to id.
-				if (_.isArray(doc[path])) {
-					doc[path].forEach(push);
-					// use cached ids if possible.
-					doc[path] = doc.populated ? 
-						doc.populated(path) : _.pluck(doc[path], '_id');
-				} else {
-					push(doc[path]);
-					doc[path] = doc.populated ? 
-						doc.populated(path) : doc[path]._id;
-				}
+				return pathType.model.populateAll(doc[path], 
+					pathType.populate === 'sideload', root, models);
 			});
 
 			// recurse. properties are attached because object is synchronized.
-			return RSVP.hash(toPopulate).then(function () {
+			return RSVP.hash(toPopulate).then(function (rePopulated) {
+				_.assign(doc, rePopulated);
 				return doc;
 			});
 		}
 
 		return model.populate(docs, _.pluck(paths, 'options')).then(function (docs) {
 			if (_.isArray(docs))
-				return RSVP.all(docs.map(recurse).concat(merge)).then(send);
+				return RSVP.all(docs.map(recurse).concat(merge));
 			else
-				return recurse(docs).then(send);
-		});
+				return recurse(docs);
+		}).then(send);
 	};
 };

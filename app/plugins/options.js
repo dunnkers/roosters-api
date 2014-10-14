@@ -11,7 +11,7 @@ module.exports = function (schema) {
 	// rename the id when serializing.
 	if (!schema.options.toJSON) schema.options.toJSON = {};
 
-	schema.options.toJSON.transform = function (doc, ret, options) {
+	schema.options.toJSON.transform = function (doc, ret) {
 		ret.id = ret._id;
 		delete ret._id;
 

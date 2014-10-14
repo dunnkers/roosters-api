@@ -133,20 +133,20 @@ module.exports = function (schema) {
 			// remove null values padded for which population failed.
 			doc = cleanNulls(doc);
 
-			var populatePaths = _.pick(paths, function (pathType, path) {
+			var recursePaths = _.pick(paths, function (pathType, path) {
 				// if this doc didn't have the ref for the populated path
 				return !_.isUndefined(doc[path]);
 			});
 
 			// map the recursive paths to populate before it is set to id.
-			populatePaths = _.mapValues(populatePaths, function (pathType, path) {
+			recursePaths = _.mapValues(recursePaths, function (pathType, path) {
 				// recursively search for more fields to populate
 				return pathType.model.populateAll(doc[path], 
 					pathType.populate === 'sideload', root, models);
 			});
 
 			// recurse. properties are attached because object is synchronized.
-			return RSVP.hash(populatePaths).then(function (populatedPath) {
+			return RSVP.hash(recursePaths).then(function (populatedPath) {
 				// attach properties. previously attached through synchronized objects,
 				// now we have to assign because of sideloads.
 				_.assign(doc, populatedPath);

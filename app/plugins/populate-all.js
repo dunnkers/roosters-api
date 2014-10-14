@@ -120,27 +120,8 @@ module.exports = function (schema) {
 		}) : docs;
 
 		function send (docs) {
-			var sendRoot = sideload || !_.isEmpty(root);
-
-			if (initiator && sendRoot) {
-				var key = _.isArray(docs) ? model.plural() : model.singular();
-
-				// middleware
-				if (_.isArray(docs))
-					docs.forEach(function (doc) {
-						model.middleware(doc);
-					});
-				else
-					model.middleware(docs);
-
-				root[key] = docs;
-
-				return root;
-			}
-
-
 			// attach populated paths to root, if sideload
-			if (sideload) {
+			if (!initiator && sideload) {
 				var key = model.plural();
 
 				root[key] = root[key] || [];
@@ -164,6 +145,22 @@ module.exports = function (schema) {
 					push(docs);
 
 				return populated;
+			}
+
+			// middleware
+			if (_.isArray(docs))
+				docs.forEach(function (doc) {
+					model.middleware(doc);
+				});
+			else
+				model.middleware(docs);
+
+			// sideload initiator
+			if (initiator && (sideload || !_.isEmpty(root))) {
+				var key = _.isArray(docs) ? model.plural() : model.singular();
+				root[key] = docs;
+
+				return root;
 			}
 
 			return docs;

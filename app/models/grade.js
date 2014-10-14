@@ -7,7 +7,8 @@ var Schema = new Schema({
 	_id: String,
 	groups: [{
 		type: String,
-		ref: 'Group'
+		ref: 'Group',
+		populate: 'sideload'
 	}]
 });
 

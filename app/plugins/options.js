@@ -12,13 +12,18 @@ module.exports = function (schema) {
 	if (!schema.options.toJSON) schema.options.toJSON = {};
 
 	schema.options.toJSON.transform = function (doc, ret) {
-		ret.id = ret._id;
-		delete ret._id;
+		if (!ret.id) {
+			ret.id = ret._id;
+			ret._id = undefined;
+			delete ret._id;
+		}
 
 		// remove empty values and arrays
 		_.forIn(ret, function (value, key) {
-			if ((_.isArray(value) || _.isString(value)) && _.isEmpty(value))
+			if ((_.isArray(value) || _.isString(value)) && _.isEmpty(value)) {
+				ret[key] = undefined;
 				delete ret[key];
+			}
 		});
 	};
 };

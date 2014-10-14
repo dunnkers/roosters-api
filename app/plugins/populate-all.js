@@ -37,34 +37,15 @@ module.exports = function (schema) {
 	 * Executed before sending model back to recursion.
 	 * @return {Object|String}  Either the ref(s) or documents.
 	 */
-	schema.statics.attach = function (docs, sideload, root) {
-		if (!sideload) return null;
-
+	schema.statics.attach = function (doc, root) {
 		var model = this,
 			key = model.plural();
 
 		root[key] = root[key] || [];
 
-		function push (doc) {
-			// push if not already in array
-			/* -regarding already transformed synchronous objects- */
-			/* in some cases, doc might not have an _id but an id  *
-			 * because of a transform. in this case we can be sure *
-			 * that this object already has been added to our root,*
-			 * because else it wouldn't have been transformed.	   */
-			if (doc._id && !_.some(root[key], { _id: doc._id })) {
-				model.middleware(doc);
-				root[key].push(doc);
-			}
-		}
-
 		// extract id(s) from document(s) to set as reference
 		// -> in some cases, this doc is already transformed. check for `id`'s as well.
-		function refId (doc) {
-			return doc._id || doc.id;
-		}
-
-		var populated = _.isArray(docs) ? docs.map(refId) : refId(docs);
+		var populated = doc._id || doc.id;
 
 		// fix polymorphic reference
 		if (model.discriminators) {
@@ -85,14 +66,19 @@ module.exports = function (schema) {
 				}
 			}
 
-			populated = _.isArray(docs) ? docs.map(ref) : ref(docs);
+			populated = ref(doc);
 		}
 
-		// attach to root and set ref to id.
-		if (_.isArray(docs))
-			docs.forEach(push);
-		else
-			push(docs);
+		// push if not already in array
+		/* -regarding already transformed synchronous objects- */
+		/* in some cases, doc might not have an _id but an id  *
+		 * because of a transform. in this case we can be sure *
+		 * that this object already has been added to our root,*
+		 * because else it wouldn't have been transformed.	   */
+		if (doc._id && !_.some(root[key], { _id: doc._id })) {
+			model.middleware(doc);
+			root[key].push(doc);
+		}
 
 		return populated;
 	}
@@ -140,8 +126,12 @@ module.exports = function (schema) {
 
 		function send (docs) {
 			// attach populated paths to root, if sideload
-			if (!endpoint) {
-				var res = model.attach(docs, sideload, root);
+			if (!endpoint && sideload) {
+				var res = _.isArray(docs) ? 
+					docs.map(function (doc) {
+						return model.attach(doc, root);
+					}) : model.attach(docs, root);
+
 				if (res) return res;
 			}
 

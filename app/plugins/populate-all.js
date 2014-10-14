@@ -18,7 +18,16 @@ module.exports = function (schema) {
 		return _.pick(this.schema.options, 'tailable', 'sort', 'limit', 'skip', 
 			'maxscan', 'batchSize', 'comment', 'snapshot', 'hint', 'slaveOk', 
 			'lean', 'safe');
-	}
+	};
+
+	schema.statics.middleware = function (doc) {
+		// if lean, we want to perform toJSON transform
+		var toJSON = this.schema.options.toJSON;
+
+		if (!doc.toJSON && toJSON && toJSON.transform)
+			// clone to prevent synchronous models getting transformed too.
+			toJSON.transform(null, doc);
+	};
 
 	/**
 	 * Returns the paths to populate for this model. Populate a path
@@ -60,7 +69,7 @@ module.exports = function (schema) {
 			// only return options since we only need those.
 			res[path] = pathType.options;
 		});
-	}
+	};
 
 	function cleanNulls (object) {
 		_.forIn(object, function (value, key) {
@@ -113,9 +122,19 @@ module.exports = function (schema) {
 		function send (docs) {
 			var sendRoot = sideload || !_.isEmpty(root);
 			if (initiator && sendRoot) {
-				root[_.isArray(docs) ? model.plural() : model.singular()] = docs;
+				var key = _.isArray(docs) ? model.plural() : model.singular();
+
+				// middleware
+				if (_.isArray(docs))
+					docs.forEach(model.middleware);
+				else
+					model.middleware(docs);
+
+				root[key] = docs;
+
 				return root;
 			}
+
 
 			// attach populated paths to root, if sideload
 			if (sideload) {
@@ -125,21 +144,23 @@ module.exports = function (schema) {
 
 				function push (doc) {
 					// push if not already in array
-					if (!_.some(root[key], { '_id': doc._id }) && doc._id)
+					if (doc._id && !_.some(root[key], { _id: doc._id })) {
+						model.middleware(doc);
 						root[key].push(doc);
+					}
 				}
 
+				// use cached ids if possible.
+				var populated = docs.populated ? docs.populated(path) : 
+					(_.isArray(docs) ? _.pluck(docs, '_id') : docs._id);
+
 				// attach to root and set ref to id.
-				if (_.isArray(docs)) {
+				if (_.isArray(docs))
 					docs.forEach(push);
-					// use cached ids if possible.
-					return docs.populated ? 
-						docs.populated(path) : _.pluck(docs, '_id');
-				} else {
+				else
 					push(docs);
-					return docs.populated ? 
-						docs.populated(path) : docs._id;
-				}
+
+				return populated;
 			}
 
 			return docs;

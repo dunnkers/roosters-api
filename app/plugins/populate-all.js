@@ -121,12 +121,15 @@ module.exports = function (schema) {
 
 		function send (docs) {
 			var sendRoot = sideload || !_.isEmpty(root);
+
 			if (initiator && sendRoot) {
 				var key = _.isArray(docs) ? model.plural() : model.singular();
 
 				// middleware
 				if (_.isArray(docs))
-					docs.forEach(model.middleware);
+					docs.forEach(function (doc) {
+						model.middleware(doc);
+					});
 				else
 					model.middleware(docs);
 

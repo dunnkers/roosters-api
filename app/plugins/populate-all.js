@@ -83,10 +83,7 @@ module.exports = function (schema) {
 	 * to avoid circular references caused by recursion.
 	 * @return {Promise}  A promise containing (recursed) population.
 	 */
-	schema.statics.populateAll = function (docs, root, models) {
-		var attach = root === true;
-		if (attach) root = undefined;
-
+	schema.statics.populateAll = function (docs, sideload, root, models) {
 		var model = this,
 			initiator = !root;
 
@@ -114,7 +111,9 @@ module.exports = function (schema) {
 		}) : docs;
 
 		function send (docs) {
-			var sendRoot = attach || !_.isEmpty(root);
+			//docs = _.isArray(docs) ? docs.map(middleware) : middleware(docs);
+
+			var sendRoot = sideload || !_.isEmpty(root);
 			if (initiator && sendRoot) {
 				root[_.isArray(docs) ? model.plural() : model.singular()] = docs;
 				return root;
@@ -136,7 +135,7 @@ module.exports = function (schema) {
 			// map the recursive paths to populate before it is set to id.
 			var toPopulate = _.mapValues(populatePaths, function (pathType, path) {
 				// recursively search for more fields to populate
-				return pathType.model.populateAll(doc[path], root, models);
+				return pathType.model.populateAll(doc[path], false, root, models);
 			});
 
 			// attach populated paths to root, if sideload

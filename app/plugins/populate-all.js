@@ -13,13 +13,6 @@ module.exports = function (schema) {
 		return this.modelName.toLowerCase();
 	};
 
-	schema.statics.queryOptions = function () {
-		// query options - http://mongoosejs.com/docs/api.html#query_Query-setOptions
-		return _.pick(this.schema.options, 'tailable', 'sort', 'limit', 'skip', 
-			'maxscan', 'batchSize', 'comment', 'snapshot', 'hint', 'slaveOk', 
-			'lean', 'safe');
-	};
-
 	// allows modifying every single document.
 	schema.statics.middleware = function (doc) {
 		// if lean, we want to perform toJSON transform
@@ -28,42 +21,6 @@ module.exports = function (schema) {
 		if (!doc.toJSON && toJSON && toJSON.transform)
 			// clone to prevent synchronous models getting transformed too.
 			toJSON.transform(null, doc);
-	};
-
-	/**
-	 * Returns the paths to populate for this model. Populate a path
-	 * by setting `populate: 'sideload' | 'embed'`.
-	 *
-	 * @return {Object}  An object with the paths.
-	 */
-	schema.statics.populatePaths = function (docs, models) {
-		var model = this;
-
-		return _.transform(_.pick(model.schema.paths, function (pathType, path) {
-			var options = pathType.options;
-
-			// for path arrays
-			if (options.type && _.isArray(options.type)) {
-				options = _.first(options.type);
-				pathType.options = options;
-			}
-
-			// path should have ref and populate property
-			if (!(options.ref && options.populate)) return false;
-
-			var pathModel = model.model(options.ref);
-			options.model = pathModel;
-
-			// include query options set on schema options.
-			options.options = _.pick(pathModel.schema.options, 'select', 'match');
-			options.options.path = path;
-			options.options.options = pathModel.queryOptions();
-
-			return true;
-		}), function (res, pathType, path) {
-			// only return options since we only need those.
-			res[path] = pathType.options;
-		});
 	};
 
 	function cleanNulls (object) {

@@ -49,9 +49,8 @@ module.exports = function (schema) {
 			}
 		}
 
-		// use cached ids if possible.
-		var populated = docs.populated ? docs.populated(path) : 
-			(_.isArray(docs) ? _.pluck(docs, '_id') : docs._id);
+		// extract id(s) from document(s) to set as reference
+		var populated = _.isArray(docs) ? _.pluck(docs, '_id') : docs._id;
 
 		// attach to root and set ref to id.
 		if (_.isArray(docs))

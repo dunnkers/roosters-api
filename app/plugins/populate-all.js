@@ -41,33 +41,40 @@ module.exports = function (schema) {
 		var model = this,
 			key = model.plural();
 
-		root[key] = root[key] || [];
-
 		// extract id(s) from document(s) to set as reference
 		// -> in some cases, this doc is already transformed. check for `id`'s as well.
 		var populated = doc._id || doc.id;
 
 		// fix polymorphic reference
 		if (model.discriminators) {
-			function ref (doc) {
-				var typeKey = model.schema.options.discriminatorKey,
-					idKey = doc._id ? '_id' : 'id';
-					res = _.pick(doc, idKey, typeKey);
+			var typeKey = model.schema.options.discriminatorKey,
+				type = doc[typeKey];
 
-				// if no type, not a polymorphic model
-				if (!doc[typeKey]) return doc[idKey];
+			// if no type, not a polymorphic model
+			if (type) {
+				var refModel = model.discriminators[type];
 
-				if (doc.toJSON) { // not lean
-					// create new model of corresponding type to bind typeKey
-					return new model.discriminators[doc[typeKey]](res);
-				} else { // lean
-					model.middleware(res);
-					return res;
+				key = refModel.plural();
+
+				function ref (doc) {
+					var idKey = doc._id ? '_id' : 'id';
+						res = _.pick(doc, idKey, typeKey);
+
+					if (doc.toJSON) { // not lean
+						// create new model of corresponding type to bind typeKey
+						return new model.discriminators[doc[typeKey]](res);
+					} else { // lean
+						model.middleware(res);
+						return res;
+					}
 				}
-			}
 
-			populated = ref(doc);
+				populated = ref(doc);
+			}
 		}
+
+
+		root[key] = root[key] || [];
 
 		// push if not already in array
 		/* -regarding already transformed synchronous objects- */

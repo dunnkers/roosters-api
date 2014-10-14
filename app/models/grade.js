@@ -14,17 +14,16 @@ var Schema = new Schema({
 Schema.plugin(timestamps);
 
 Schema.statics.aggregation = function () {
-	var self = this;
+	var Item = this.model('Item'),
+		Grade = this;
 
-	return this.aggregate({ $match: { type: 'Group' } }, {
+	return Item.aggregate({ $match: { type: 'Group' } }, {
 		$group: {
 			_id: '$grade',
 			groups: { $push: '$_id' }
 		}
 	}).exec().then(function (grades) {
 		return RSVP.all(grades.map(function (grade) {
-			var Grade = self.model('Grade');
-
 			return Grade.upsert(new Grade(grade));
 		}));
 	});

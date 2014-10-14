@@ -76,7 +76,7 @@ module.exports = function (schema) {
 					// create new model of corresponding type to bind typeKey
 					return new model.discriminators[doc[typeKey]](res);
 				} else { // lean
-					//model.middleware(res);
+					model.middleware(res);
 					return res;
 				}
 			}

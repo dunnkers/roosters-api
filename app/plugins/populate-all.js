@@ -6,11 +6,11 @@ module.exports = function (schema) {
 
 	// easier accessors
 	schema.statics.plural = function () {
-		return utils.toCollectionName(this.modelName);	
+		return utils.toCollectionName(this.modelName);
 	};
 
 	schema.statics.singular = function () {
-		return this.modelName.toLowerCase();	
+		return this.modelName.toLowerCase();
 	};
 
 	schema.statics.queryOptions = function () {
@@ -20,6 +20,7 @@ module.exports = function (schema) {
 			'lean', 'safe');
 	};
 
+	// allows modifying every single document.
 	schema.statics.middleware = function (doc) {
 		// if lean, we want to perform toJSON transform
 		var toJSON = this.schema.options.toJSON;
@@ -81,6 +82,35 @@ module.exports = function (schema) {
 		return object;
 	}
 
+	schema.statics.attach = function (docs, sideload, root) {
+		if (!sideload) return null;
+
+		var model = this,
+			key = model.plural();
+
+		root[key] = root[key] || [];
+
+		function push (doc) {
+			// push if not already in array
+			if (doc._id && !_.some(root[key], { _id: doc._id })) {
+				model.middleware(doc);
+				root[key].push(doc);
+			}
+		}
+
+		// use cached ids if possible.
+		var populated = docs.populated ? docs.populated(path) : 
+			(_.isArray(docs) ? _.pluck(docs, '_id') : docs._id);
+
+		// attach to root and set ref to id.
+		if (_.isArray(docs))
+			docs.forEach(push);
+		else
+			push(docs);
+
+		return populated;
+	}
+
 	/**
 	 * Populates the given document(s) recursively. Turn on population
 	 * for a field using either `populate: 'sideload'` or `populate: 'embed'`.
@@ -121,30 +151,9 @@ module.exports = function (schema) {
 
 		function send (docs) {
 			// attach populated paths to root, if sideload
-			if (!initiator && sideload) {
-				var key = model.plural();
-
-				root[key] = root[key] || [];
-
-				function push (doc) {
-					// push if not already in array
-					if (doc._id && !_.some(root[key], { _id: doc._id })) {
-						model.middleware(doc);
-						root[key].push(doc);
-					}
-				}
-
-				// use cached ids if possible.
-				var populated = docs.populated ? docs.populated(path) : 
-					(_.isArray(docs) ? _.pluck(docs, '_id') : docs._id);
-
-				// attach to root and set ref to id.
-				if (_.isArray(docs))
-					docs.forEach(push);
-				else
-					push(docs);
-
-				return populated;
+			if (!initiator) {
+				var res = model.attach(docs, sideload, root);
+				if (res) return res;
 			}
 
 			// middleware
@@ -177,15 +186,18 @@ module.exports = function (schema) {
 			});
 
 			// map the recursive paths to populate before it is set to id.
-			var toPopulate = _.mapValues(populatePaths, function (pathType, path) {
+			populatePaths = _.mapValues(populatePaths, function (pathType, path) {
 				// recursively search for more fields to populate
 				return pathType.model.populateAll(doc[path], 
 					pathType.populate === 'sideload', root, models);
 			});
 
 			// recurse. properties are attached because object is synchronized.
-			return RSVP.hash(toPopulate).then(function (rePopulated) {
-				_.assign(doc, rePopulated);
+			return RSVP.hash(populatePaths).then(function (populatedPath) {
+				// attach properties. previously attached through synchronized objects,
+				// now we have to assign because of sideloads.
+				_.assign(doc, populatedPath);
+
 				return doc;
 			});
 		}

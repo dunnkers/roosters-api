@@ -34,8 +34,6 @@ module.exports = function (schema) {
 	 * Returns the paths to populate for this model. Populate a path
 	 * by setting `populate: 'sideload' | 'embed'`.
 	 *
-	 * @param {Object|Array} docs Optionally, filter by path existance in these docs.
-	 * @param {Array} models Optionally filter by (these) circular model references.
 	 * @return {Object}  An object with the paths.
 	 */
 	schema.statics.populatePaths = function (docs, models) {
@@ -53,19 +51,15 @@ module.exports = function (schema) {
 			// path should have ref and populate property
 			if (!(options.ref && options.populate)) return false;
 
-			// don't populate previously populated (circular) models
 			var pathModel = model.model(options.ref);
 			options.model = pathModel;
-
-			if (models && _.contains(models, pathModel.modelName)) return false;
 
 			// include query options set on schema options.
 			options.options = _.pick(pathModel.schema.options, 'select', 'match');
 			options.options.path = path;
 			options.options.options = pathModel.queryOptions();
 
-			// only populate fields that actually exist
-			return docs ? (_.isArray(docs) ? _.some(docs, path) : docs[path]) : true;
+			return true;
 		}), function (res, pathType, path) {
 			// only return options since we only need those.
 			res[path] = pathType.options;
@@ -132,8 +126,11 @@ module.exports = function (schema) {
 		// avoid following circular references by keeping a register of (parent) models
 		if (!_.contains(models, model.modelName)) models.push(model.modelName);
 
-		// filter paths to populate
-		var paths = model.populatePaths(docs, models);
+		// filter paths to populate by previously populated (circular) models
+		var paths = _.pick(model.populatePaths(docs, models), function (pathType, path) {
+			if (_.contains(models, pathType.model.modelName)) return false;
+			return _.isArray(docs) ? _.some(docs, path) : docs[path];
+		});
 
 		if (_.isEmpty(paths)) return send(docs);
 

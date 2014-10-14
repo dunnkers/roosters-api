@@ -56,7 +56,11 @@ module.exports = function (schema) {
 
 		// extract id(s) from document(s) to set as reference
 		// -> in some cases, this doc is already transformed. check for `id`'s as well.
-		var populated = _.isArray(docs) ? _.pluck(docs, '_id') : docs._id;
+		function refId (doc) {
+			return doc._id || doc.id;
+		}
+
+		var populated = _.isArray(docs) ? docs.map(refId) : refId(docs);
 
 		// fix polymorphic reference
 		if (model.discriminators) {
@@ -66,7 +70,7 @@ module.exports = function (schema) {
 					res = _.pick(doc, idKey, typeKey);
 
 				// if no type, not a polymorphic model
-				if (!doc[typeKey]) return doc._id;
+				if (!doc[typeKey]) return doc[idKey];
 
 				if (doc.toJSON) { // not lean
 					// create new model of corresponding type to bind typeKey

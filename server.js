@@ -48,50 +48,6 @@ app.get('/', function (req, res, next) {
 	res.send('Roosters-API');
 });
 
-/*
- * Wrap polymorphic models.
- * -> works only with lean models!
- */
-function sendItems (modelName, res) {
-	return function (docs) {
-		var single = _.isArray(docs) || docs.length === 1;
-		docs = _.isArray(docs) ? docs : [ docs ];
-
-		var root = _.groupBy(docs, 'type');
-
-		// pluralize
-		root = _.transform(root, function (res, docs, key) {
-			res[utils.toCollectionName(key)] = docs;
-		});
-
-		// wrap
-		docs = docs.map(function (doc) {
-			return {
-				id: doc.id,
-				item: {
-					id: doc.id,
-					type: doc.type
-				}
-			};
-		});
-
-		// remove types before attaching
-		root = _.mapValues(root, function (docs) {
-			return docs.map(function (doc) {
-				delete doc.type;
-				return doc;
-			});
-		});
-
-		if (single) 
-			root[utils.toCollectionName(modelName)] = docs;
-		else 
-			root[modelName.toLowerCase()] = _.first(docs);
-		
-		res.send(root);
-	};
-}
-
 function notFound (res) {
 	res.status(404).send('We couldn\'t find those, sorry!');
 }

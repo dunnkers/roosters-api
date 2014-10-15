@@ -26,6 +26,7 @@ function AbstractSchema () {
 
 	// overwrite selection to delete index, 
 	this.options.select = '-__v -createdAt -updatedAt -index -grade';
+	this.options.wrapPolymorphic = true;
 
 	// createdAt and updatedAt properties
 	this.plugin(timestamps);

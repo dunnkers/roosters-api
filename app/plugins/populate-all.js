@@ -43,7 +43,8 @@ module.exports = function (schema) {
 
 		// extract id(s) from document(s) to set as reference
 		// -> in some cases, this doc is already transformed. check for `id`'s as well.
-		var populated = doc._id || doc.id;
+		var idKey = doc._id ? '_id' : 'id',
+			populated = doc[idKey];
 
 		// fix polymorphic reference
 		if (model.discriminators) {
@@ -57,8 +58,7 @@ module.exports = function (schema) {
 				key = refModel.plural();
 
 				function ref (doc) {
-					var idKey = doc._id ? '_id' : 'id';
-						res = _.pick(doc, idKey, typeKey);
+					var res = _.pick(doc, idKey, typeKey);
 
 					if (doc.toJSON) { // not lean
 						// create new model of corresponding type to bind typeKey
@@ -82,7 +82,9 @@ module.exports = function (schema) {
 		 * because of a transform. in this case we can be sure *
 		 * that this object already has been added to our root,*
 		 * because else it wouldn't have been transformed.	   */
-		if (doc._id && !_.some(root[key], { _id: doc._id })) {
+		// this operation is -very- slow!
+		if (doc[idKey] && !_.some(root[key], { _id: doc[idKey] }) && 
+			!_.some(root[key], { id: doc[idKey] })) {
 			model.middleware(doc);
 			root[key].push(doc);
 		}
@@ -157,15 +159,12 @@ module.exports = function (schema) {
 					function wrap (doc) {
 						// [!] check for typeKey existance.
 						// [!] converge with attach's methods for doing this.
-						var typeKey = model.schema.options.discriminatorKey,
-							realModel = model.discriminators[doc[typeKey]];
-
 						var res = { _id: doc._id || doc.id };
 						// [!] doc _id might be transformed to id
 						// when passing realModel instead of model, model 
 						// doesn't contain discriminators.
 						// -> maybe put an option `force`.
-						res[model.singular()] = realModel.attach(doc, root);
+						res[model.singular()] = model.attach(doc, root);
 						// [!] needs transform.
 
 						return res;

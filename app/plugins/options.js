@@ -12,6 +12,10 @@ module.exports = function (schema) {
 	if (!schema.options.toJSON) schema.options.toJSON = {};
 
 	schema.options.toJSON.transform = function (doc, ret) {
+		if (schema.options.toJSON.transformation) {
+			schema.options.toJSON.transformation(ret);
+		}
+
 		if (!ret.id) {
 			ret.id = ret._id;
 			ret._id = undefined;

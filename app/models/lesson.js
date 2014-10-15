@@ -52,6 +52,17 @@ function AbstractSchema () {
 						'empty', 'between', 'reserved',
 						'room', 'teacher', 'subject' ];
 
+	// do not send schedules if a cluster or group is defined
+	if (!this.options.toJSON) this.options.toJSON = {};
+
+	// delete schedules in document transformation. note this is only effective
+	// if Lesson.schedules is -not- populated. else the models are attached anyway.
+	this.options.toJSON.transformation = function (doc) {
+		if (doc.schedules && (doc.cluster || doc.group)) {
+			delete doc.schedules;
+		}
+	};
+
 	// discriminator options - http://bit.ly/1knmNlG
 	this.options.collection = 'lessons';
 	this.options.discriminatorKey = 'lessonType';

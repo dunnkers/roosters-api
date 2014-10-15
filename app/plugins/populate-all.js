@@ -10,7 +10,7 @@ module.exports = function (schema) {
 	};
 
 	schema.statics.singular = function () {
-		return this.modelName.toLowerCase();
+		return this.modelName.charAt(0).toLowerCase() + this.modelName.slice(1);
 	};
 
 	// allows modifying every single document.
@@ -77,11 +77,6 @@ module.exports = function (schema) {
 		root[key] = root[key] || [];
 
 		// push if not already in array
-		/* -regarding already transformed synchronous objects- */
-		/* in some cases, doc might not have an _id but an id  *
-		 * because of a transform. in this case we can be sure *
-		 * that this object already has been added to our root,*
-		 * because else it wouldn't have been transformed.	   */
 		// this operation is -very- slow!
 		if (doc[idKey] && !_.some(root[key], { _id: doc[idKey] }) && 
 			!_.some(root[key], { id: doc[idKey] })) {

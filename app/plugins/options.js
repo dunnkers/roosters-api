@@ -8,7 +8,7 @@ module.exports = function (schema) {
 	// lean
 	schema.options.lean = true;
 
-	// rename the id when serializing.
+	// json transform. renames `_id` and checks empty values.
 	if (!schema.options.toJSON) schema.options.toJSON = {};
 
 	schema.options.toJSON.transform = function (doc, ret) {
@@ -16,6 +16,7 @@ module.exports = function (schema) {
 			schema.options.toJSON.transformation(ret);
 		}
 
+		// rename the id when serializing.
 		if (!ret.id) {
 			ret.id = ret._id;
 			ret._id = undefined;

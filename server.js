@@ -18,10 +18,6 @@ var db = require('./app/connection'),
 var ip = process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1",
 	port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
 
-// should be set in api, to make it more variable
-// startTime: String,
-// endTime: String,
-
 app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.set('Content-Type', 'application/json');
@@ -66,6 +62,7 @@ function route (req, res, next) {
 			return docs;
 		})
 		.then(function (docs) {
+			// passing true to populateAll forces for a root
 			return req.model.populateAll(docs, true);
 		})
 		.then(function (root) {

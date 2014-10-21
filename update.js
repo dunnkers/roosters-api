@@ -13,7 +13,8 @@ log4js.configure({
 // scraper, connection and models
 var scraper = require('./app/scraper'),
 	db = require('./app/connection'),
-	models = require('./app/initializers/models');
+	models = require('./app/initializers/models'),
+	flow = require('./app/utils/flow-control');
 
 function sum (a, b) {
 	return a + b;
@@ -23,49 +24,11 @@ function numberAffected (results) {
 	return _.reduce(_.pluck(results, 'numberAffected'), sum) || 0;
 }
 
-/**
- * Promised async mapping. Supports limited parallel and
- * serial when no limit is given.
- * @param  {Array} arr     Array to map.
- * @param  {Promise} promise Promise to invoke with every item.
- * @param  {Number} limit   Limit of parallel executions. If not given serial.
- * @return {Promise}         Promise resolving when all items are done.
- */
-function asyncMap (arr, promise, limit) {
-	return new RSVP.Promise(function (resolve, reject) {
-		async.mapLimit(arr, limit || 1, function (item, callback) {
-			promise(item).then(function (res) {
-				callback(null, res);
-			}, function (err) {
-				callback(err);
-			});
-		}, function (err, results) {
-			if (err) reject(err);
-
-			resolve(results);
-		});
-	});
-}
-
-function drain (queue) {
-	return new RSVP.Promise(function (resolve, reject) {
-		if (queue.running() || !queue.idle()) {
-			log.trace('Processing %d tasks in queue...', queue.length());
-			queue.drain = function () {
-				log.trace('All tasks finished!');
-				resolve();
-			};
-		}else {
-			resolve();
-		}
-	});
-}
-
 var queue, schedules = [];
 
 db.connect().then(function () {
 	log.info('Updating items...');
-	return asyncMap(models.items, function (Item) {
+	return flow.asyncMap(models.items, function (Item) {
 		return scraper.getItems(Item.modelName).then(function (items) {
 			return RSVP.all(items.map(function (item) {
 				// -> item is serialized here.
@@ -129,7 +92,7 @@ db.connect().then(function () {
 		.then(function (items) {
 			// items = [Student|...]
 			// execute http requests with a max concurrency of 5
-			return asyncMap(items, function (item) {
+			return flow.asyncMap(items, function (item) {
 				return scraper.getLessons(Item.modelName, item.toObject())
 				// for some reason, when using `.then(Lesson.x)` it doesn't  work.
 				.then(function (lessons) {
@@ -162,7 +125,7 @@ db.connect().then(function () {
 
 	print('\n');
 	log.info('Updating schedules...');
-	return drain(queue);
+	return flow.drain(queue);
 }).then(function () {
 	log.info('Updated %d schedules!', numberAffected(schedules));
 

@@ -3,7 +3,8 @@ var mongoose = require('mongoose'),
 	relationship = require('mongoose-relationship'),
 	Schema = mongoose.Schema,
 	_ = require('lodash'),
-	RSVP = require('RSVP');
+	RSVP = require('RSVP'),
+	flow = require('../utils/flow-control');
 
 var Schema = new Schema({
 	_id: String,
@@ -56,9 +57,9 @@ Schema.statics.aggregation = function () {
 	}).then(function (clusters) {
 		clusters = _.filter(clusters, 'students');
 
-		return RSVP.all(clusters.map(function (cluster) {
+		return flow.asyncMap(clusters, function (cluster) {
 			return Cluster.upsert(new Cluster(cluster));
-		}));
+		});
 	});
 };
 

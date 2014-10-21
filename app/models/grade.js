@@ -1,7 +1,8 @@
 var mongoose = require('mongoose'),
 	timestamps = require('mongoose-timestamp'),
 	Schema = mongoose.Schema,
-	RSVP = require('RSVP');
+	RSVP = require('RSVP'),
+	flow = require('../utils/flow-control');
 
 var Schema = new Schema({
 	_id: String,
@@ -24,9 +25,9 @@ Schema.statics.aggregation = function () {
 			groups: { $push: '$_id' }
 		}
 	}).exec().then(function (grades) {
-		return RSVP.all(grades.map(function (grade) {
+		return flow.asyncMap(grades, function (grade) {
 			return Grade.upsert(new Grade(grade));
-		}));
+		});
 	});
 };
 

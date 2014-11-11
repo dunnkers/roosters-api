@@ -1,10 +1,10 @@
 var format = require('util').format,
-	print = require('util').print,
 	crypto = require('crypto'),
 	assert = require('assert'),
 	// deps
 	rest = require('restler'),
-	RSVP = require('rsvp')/*,
+	RSVP = require('rsvp'),
+	stream = process.stdout/*,
 	log4js = require('log4js'),
 	log = log4js.getLogger('request')*/;
 
@@ -30,14 +30,14 @@ module.exports = function (uri, name) {
 		}).on('error', function (err) {
 			reject(format('Couldn\'t request %s (%s)\n%s', name, uri, err));
 		}).on('success', function (data, response) {
-			print(format('http %s: %dms\t\t', timeStr, new Date() - time));
+			stream.write(format('http %s: %dms\t\t', timeStr, new Date() - time));
 
 			var setCookie = response.headers['set-cookie'];
 			/*log.debug('http %s: %dms%s', 
 				timeStr, new Date() - time, setCookie ? ' [COOKIE]' : '');*/
 			if (setCookie) {
 				cookie = setCookie[0];
-				print(format('COOKIE for: %s\t\t', name));
+				stream.write(format('COOKIE for: %s\t\t', name));
 			}
 
 			resolve(data);

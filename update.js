@@ -1,10 +1,9 @@
-var print = require('util').print,
-	// deps
-	RSVP = require('rsvp'),
+var RSVP = require('rsvp'),
 	_ = require('lodash'),
 	async = require('async'),
 	log4js = require('log4js'),
-	log = log4js.getLogger('update');
+	log = log4js.getLogger('update'),
+	stream = process.stdout;
 
 log4js.configure({
 	appenders: [ { type: "console", layout: { type: "basic" } } ], replaceConsole: true
@@ -49,7 +48,7 @@ db.connect().then(function () {
 }).then(function (grades) {
 	log.info('Aggregated %d grades.', numberAffected(grades));
 
-	print('\n');
+	stream.write('\n');
 	log.info('Downloading schedules...');
 
 	// store a schedule
@@ -123,7 +122,7 @@ db.connect().then(function () {
 }).then(function (schedules) {
 	log.info('Downloaded %d schedules.', _.reduce(schedules, sum) || 0);
 
-	print('\n');
+	stream.write('\n');
 	log.info('Updating schedules...');
 	return flow.drain(queue);
 }).then(function () {

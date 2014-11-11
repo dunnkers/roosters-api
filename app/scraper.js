@@ -1,5 +1,5 @@
 var format = require('util').format,
-	print = require('util').print,
+	stream = process.stdout,
 	// deps
 	cheerio = require('cheerio'),
 	_ = require('lodash');
@@ -8,7 +8,8 @@ var config = require('../config/config'),
 	request = require('./request');
 
 exports.parseItems = function (data) {
-	print('\n');
+	stream.write('\n');
+
 	$ = cheerio.load(data);
 
 	return $('tr').map(function () {
@@ -28,7 +29,7 @@ exports.parseItems = function (data) {
 };
 
 exports.parseLessons = function (data) {
-	print('\n');
+	stream.write('\n');
 	$ = cheerio.load(data);
 	
 	// inverted x- or y-axis

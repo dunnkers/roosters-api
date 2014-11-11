@@ -1,9 +1,8 @@
-var print = require('util').print,
-	// deps
-	mongoose = require('mongoose'),
+var mongoose = require('mongoose'),
 	RSVP = require('rsvp'),
 	log4js = require('log4js'),
-	log = log4js.getLogger('connection');
+	log = log4js.getLogger('connection'),
+	stream = process.stdout;
 
 var config = require('../config/config');
 var db = mongoose.connection;
@@ -16,12 +15,12 @@ db.connect = function () {
 
 		db.once('open', function () {
 			log.info('Connection opened.');
-			print('\n');
+			stream.write('\n');
 			resolve();
 		});
 
 		db.on('close', function () {
-			print('\n');
+			stream.write('\n');
 			log.info('Connection closed.');
 		});
 	});

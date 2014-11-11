@@ -1,5 +1,4 @@
 var format = require('util').format,
-	print = require('util').print,
 	express = require('express'),
 	app = express(),
 	log4js = require('log4js'),

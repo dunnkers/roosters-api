@@ -4,9 +4,7 @@ var format = require('util').format,
 	// deps
 	rest = require('restler'),
 	RSVP = require('rsvp'),
-	stream = process.stdout/*,
-	log4js = require('log4js'),
-	log = log4js.getLogger('request')*/;
+	stream = process.stdout;
 
 var config = require('../config/config');
 var cookie;
@@ -33,8 +31,7 @@ module.exports = function (uri, name) {
 			stream.write(format('http %s: %dms\t\t', timeStr, new Date() - time));
 
 			var setCookie = response.headers['set-cookie'];
-			/*log.debug('http %s: %dms%s', 
-				timeStr, new Date() - time, setCookie ? ' [COOKIE]' : '');*/
+			
 			if (setCookie) {
 				cookie = setCookie[0];
 				stream.write(format('COOKIE for: %s\t\t', name));

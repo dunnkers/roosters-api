@@ -3,10 +3,6 @@ var RSVP = require('rsvp'),
 	log4js = require('log4js'),
 	log = log4js.getLogger('flow');
 
-log4js.configure({
-	appenders: [ { type: "console", layout: { type: "basic" } } ], replaceConsole: true
-});
-
 /**
  * Promised async mapping. Supports limited parallel and
  * serial when no limit is given.

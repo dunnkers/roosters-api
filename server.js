@@ -7,10 +7,6 @@ var format = require('util').format,
 	RSVP = require('RSVP'),
 	utils = require('mongoose/lib/utils');
 
-log4js.configure({
-	appenders: [ { type: "console", layout: { type: "basic" } } ], replaceConsole: true
-});
-
 var db = require('./app/connection'),
 	collections = require('./app/initializers/collections');
 

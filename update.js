@@ -5,10 +5,6 @@ var RSVP = require('rsvp'),
 	log = log4js.getLogger('update'),
 	stream = process.stdout;
 
-log4js.configure({
-	appenders: [ { type: "console", layout: { type: "basic" } } ], replaceConsole: true
-});
-
 // scraper, connection and models
 var scraper = require('./app/scraper'),
 	db = require('./app/connection'),
@@ -35,7 +31,7 @@ db.connect().then(function () {
 			}));
 		}).then(function (items) {
 			var updated = numberAffected(items);
-			log.info('Updated %d [%s]', updated, Item.modelName);
+			log.debug('Updated %d [%s]', updated, Item.modelName);
 			return updated;
 		});
 	}).catch(function (err) {
@@ -61,7 +57,7 @@ db.connect().then(function () {
 			if (err.name === 'VersionError') log.error('Concurrency issues!');
 			log.error('Failed to insert lessons for %d -', item._id, err);
 		}).then(function (lessons) {
-			log.trace('Updated %d of %d lessons for %s [%s]', 
+			log.debug('Updated %d of %d lessons for %s [%s]', 
 				numberAffected(lessons), lessons.length, item._id, item.type);
 
 			return models.Schedule.upsert(new models.Schedule({
@@ -112,7 +108,7 @@ db.connect().then(function () {
 		// first parse lessons - then store the schedule.
 		}).then(function (schedules) {
 			var updated = schedules.length;
-			log.trace('Downloaded %d schedules [%s]', updated, Item.modelName);
+			log.debug('Downloaded %d schedules [%s]', updated, Item.modelName);
 
 			return updated;
 		});
@@ -134,7 +130,7 @@ db.connect().then(function () {
 
 	db.close();
 }, function (err) {
-	log.error('Oops, something went wrong! –', err);
+	log.fatal('Oops, something went wrong! –', err);
 
 	db.close();
 });

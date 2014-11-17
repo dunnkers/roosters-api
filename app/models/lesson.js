@@ -88,6 +88,20 @@ function AbstractSchema () {
 				// if empty or reserved we don't have to parse.
 				if (lesson.empty || lesson.reserved) return res.push(lesson);
 
+				var type = lesson.origin ? lesson.origin.type : '';
+
+				/* uncertainties */
+				lesson.content = _.transform(lesson.content, function (res, str, key) {
+					if (str.slice(-1) === '*') {
+						str = str.replace(/\*$/, '');
+
+						// only take student uncertainties seriously, delete others.
+						if (type === 'Student') res[key] = str;
+					} else {
+						res[key] = str;
+					}
+				});
+
 				/* DETECT */
 				var found = {};
 
@@ -109,7 +123,6 @@ function AbstractSchema () {
 				/* VALIDATE */
 				// meeting. e.g. `Inv`, `Acht1` or `team1` lessons.
 				var meeting = found.teacher && !(found.group || found.cluster);
-				var type = lesson.origin ? lesson.origin.type : '';
 				if (type === 'Room' && meeting) delete found.teacher;
 
 				// converge into group if both found

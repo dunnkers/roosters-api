@@ -85,24 +85,26 @@ exports.parseLesson = function (day) {
 		});
 	}
 
-	var i = 0;
+	var lesson = {
+		day: day
+	};
+
 	/* Algorithm - iterates contents() and maps to a var as the correct index
 	 */
-	var content = {};
+	var i = 0,
+		content = {};
+
 	$(this).contents().each(function () {
 		if ($(this)[0].name === 'br') i ++;
 		if ($(this)[0].type === 'text') {
 			var str = $(this).text().trim();
-			// remove last aterisk if any
-			if (str.slice(-1) === '*') str = str.replace(/\*$/, '');
-			//if (str.lastIndexOf('*') != -1) str = str.substr(0, i) + str.substr(i);
+
+			// reserved lessons
+			if (str === '===') lesson.reserved = true;
+
 			if (str) content[i] = str;
 		}
 	});
-
-	var lesson = {
-		day: day
-	};
 
 	// for empty lessons
 	if (!$(this).text().trim()) {
@@ -110,8 +112,6 @@ exports.parseLesson = function (day) {
 	}else {
 		lesson.content = content;
 	}
-	// for teacher reserved lessons
-	if (_.contains(_.values(lesson.content), '===')) lesson.reserved = true;
 
 	return lesson;
 };

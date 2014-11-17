@@ -79,15 +79,6 @@ describe('Parsing - Teacher schedule', function () {
 		var lesson = $('td').map(scraper.parseLesson).toArray()[0];
 		lesson.content.should.have.property('1', 'Inv');
 	})
-
-	it('should have aterisks removed', function () {
-		var results = _.filter(lessons, function (lesson) {
-			return _.filter(_.values(lesson.content), function (str) {
-				return str && str.slice && str.slice(-1) === '*';
-			}).length > 0;
-		});
-		results.length.should.not.be.above(0);
-	});
 });
 
 describe('Parsing - Another teacher schedule', function() {

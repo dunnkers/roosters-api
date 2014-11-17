@@ -7,11 +7,3 @@ var scraper = require('../app/scraper'),
 var db = require('../app/connection'),
 	models = require('../app/initializers/models');
 
-
-describe('Lesson serialization', function () {
-	it('should correctly serialize schedule', function () {
-		var StudentLesson = models.StudentLesson;
-		var lessons = scraper.parseLessons(fixtures.schedules.student);
-		StudentLesson.serialize(lessons);
-	});
-});

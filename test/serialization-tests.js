@@ -69,7 +69,7 @@ describe('Serialization - lesson', function () {
 			content: {
 				1: 'team5', 2: '037'
 			},
-			origin: { _id: 'Kiew' }
+			origin: { _id: 'Kiew', type: 'Teacher' }
 		});
 		models.Lesson.serialize([ lesson ]).then(function (lessons) {
 			var lesson = lessons[0];
@@ -213,7 +213,7 @@ describe('Serialization - lesson', function () {
 	it('should be serialized as group lesson with deleted origin', function (done) {
 		var lesson = new models.GroupLesson({
 			subIndex: 2,
-			origin: { _id: 'TA6c' }
+			origin: { _id: 'TA6c', type: 'Group' }
 		});
 		models.Lesson.serialize([ lesson ]).then(function (lessons) {
 			var lesson = lessons[0];
@@ -273,6 +273,39 @@ describe('Parsing - lesson', function () {
 			lessons[2].should.have.properties({ teacher: 'Tinw', room: '330' });
 			(lessons[3].room === undefined).should.be.true;
 			lessons[3].teacher.should.eql('Vosd');
+
+			done();
+		});
+	});
+});
+
+describe('Uncertain lesson serialization', function () {
+
+	it('should have aterisks removed', function (done) {
+		var StudentLesson = models.StudentLesson,
+			lessons = StudentLesson.serialize([ {
+			content: [ 'men', 'Logr*', '224*' ],
+			origin: { type: 'Student' }
+		} ]);
+
+		lessons.then(function (lessons) {
+			lessons[0].should.have.property('teacher', 'Logr');
+			lessons[0].should.have.property('room', '224');
+
+			done();
+		});
+	});
+
+	it('should delete uncertain teacher lessons', function (done) {
+		var TeacherLesson = models.TeacherLesson,
+			lessons = TeacherLesson.serialize([ {
+			content: [ 'TV4a*', 'bu', '037*' ],
+			origin: { type: 'Teacher' }
+		} ]);
+
+		lessons.then(function (lessons) {
+			lessons[0].should.not.have.property('room');
+			lessons[0].should.not.have.property('group');
 
 			done();
 		});

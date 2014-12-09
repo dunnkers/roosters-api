@@ -57,7 +57,7 @@ db.connect().then(function () {
 			if (err.name === 'VersionError') log.error('Concurrency issues!');
 			log.error('Failed to insert lessons for %d -', item._id, err);
 		}).then(function (lessons) {
-			log.debug('Updated %d of %d lessons for %s [%s]', 
+			log.debug('Updated %d of %d lessons for %s [%s]',
 				numberAffected(lessons), lessons.length, item._id, item.type);
 
 			return models.Schedule.upsert(new models.Schedule({
@@ -65,7 +65,7 @@ db.connect().then(function () {
 			}));
 		}).then(function (schedule) {
 			schedules.push(schedule);
-			
+
 			// set generated schedule id
 			item.schedule = schedule.product._id;
 			return item.promisedSave();
@@ -80,10 +80,7 @@ db.connect().then(function () {
 	return RSVP.all(models.items.map(function (Item) {
 		var ItemLesson = models[Item.modelName + 'Lesson'];
 
-		// Item = Student|Teacher|Room|Group
-		// "10971", "Hofe", "11381", "13769", "11051", "11322"
-		// "13769", "12993", "14445", "14445", "14495", "11467", "14339", "12702", "11466", "12343"
-		return Item.find({ _id: { $in: [ "032", "13769", "10971", "Lafh", "11051", "327" ] } }).exec()
+		return Item.find({ _id: { $in: [ "Logr", "Helg", "Vosd", "10971", "Lafh", "TV6c", "327", "11051" ] } }).exec()
 		.then(function (items) {
 			// items = [Student|...]
 			// execute http requests with a max concurrency of 5

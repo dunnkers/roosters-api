@@ -48,7 +48,7 @@ function AbstractSchema () {
 	});
 
 	// fields that determine a unique lesson. these are used to query.
-	this.options.fields = [ 'day', 'index', 
+	this.options.fields = [ 'day', 'index',
 						'empty', 'between', 'reserved',
 						'room', 'teacher', 'subject' ];
 
@@ -95,8 +95,10 @@ function AbstractSchema () {
 					if (str.slice(-1) === '*') {
 						str = str.replace(/\*$/, '');
 
-						// only take student uncertainties seriously, delete others.
-						if (type === 'Student') res[key] = str;
+						// only take student and group uncertainties seriously, delete others.
+						if (type === 'Student' || type === 'Group') {
+							res[key] = str;
+						}
 					} else {
 						res[key] = str;
 					}

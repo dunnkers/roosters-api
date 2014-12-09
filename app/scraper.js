@@ -31,7 +31,7 @@ exports.parseItems = function (data) {
 exports.parseLessons = function (data) {
 	stream.write('\n');
 	$ = cheerio.load(data);
-	
+
 	// inverted x- or y-axis
 	var headers = $('body body > table > tr:first-child').children('td + td');
 	// -> when there are any numbers on the x-axis header
@@ -54,7 +54,7 @@ exports.parseLessons = function (data) {
 		});
 
 		// parse
-		// -> toArray converts object {'0': ...} to array. 
+		// -> toArray converts object {'0': ...} to array.
 		lessons = lessons.map(exports.parseLesson).toArray();
 
 		return lessons.map(function (lesson) {
@@ -127,7 +127,8 @@ exports.resolveBetween = function (lessons) {
 
 		// map property onto the lessons
 		day.map(function (lesson) {
-			if (_.contains(betweens, lesson.index)) lesson.between = true
+			lesson.between = _.contains(betweens, lesson.index);
+
 			return lesson;
 		});
 	});

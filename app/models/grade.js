@@ -10,6 +10,11 @@ var Schema = new Schema({
 		type: String,
 		ref: 'Group',
 		populate: 'sideload'
+	}],
+	clusters: [{
+		type: String,
+		ref: 'Cluster',
+		populate: 'sideload'
 	}]
 });
 

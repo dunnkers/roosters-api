@@ -15,8 +15,7 @@ function AbstractSchema () {
 		schedule: {
 			type: Schema.Types.ObjectId,
 			ref: 'Schedule',
-			childPath: 'items',
-			populate: 'sideload'
+			childPath: 'items'
 		}
 	});
 

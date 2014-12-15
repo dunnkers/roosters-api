@@ -56,6 +56,8 @@ Schema.statics.aggregation = function () {
 
 				// id refs
 				cluster.students = _.pluck(cluster.students, '_id');
+				// ensure uniqueness
+				cluster.students = _.uniq(cluster.students);
 
 				// set grade if found in title
 				var found = cluster.grade.some(function (grade) {

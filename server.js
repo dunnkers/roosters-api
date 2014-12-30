@@ -5,7 +5,8 @@ var format = require('util').format,
 	log = log4js.getLogger('server'),
 	_ = require('lodash'),
 	RSVP = require('RSVP'),
-	utils = require('mongoose/lib/utils');
+	utils = require('mongoose/lib/utils'),
+	stream = process.stdout;
 
 var db = require('./app/connection'),
 	collections = require('./app/initializers/collections');
@@ -44,7 +45,9 @@ function notFound (res) {
 }
 
 function route (req, res, next) {
-	var select = req.model.schema.options.select || '';
+	var select = req.model.schema.options.select || '',
+			time = new Date();
+
 
 	req.findQuery.select(select).setOptions(req.model.queryOptions()).exec()
 		// docs exist
@@ -57,10 +60,15 @@ function route (req, res, next) {
 			return docs;
 		})
 		.then(function (docs) {
+			log.debug('\tFind query:', new Date() - time, 'ms');
+			time = new Date();
+
 			// passing true to populateAll forces for a root
 			return req.model.populateAll(docs, true);
 		})
 		.then(function (root) {
+			log.debug('\tPopulate-all: ', new Date() - time, 'ms');
+
 			res.send(root);
 		}, function (err) {
 			if (err.name === 'CastError' || err.message === 'not found')
@@ -75,22 +83,27 @@ function route (req, res, next) {
 	);
 }
 
-app.use('/:model', function (req, res, next) {
-	var timeStr = format('%s%s retrieval', req.modelName, 
-		req.id ? format(' (%s)', req.id) : '');
-	console.time(timeStr);
+function measureTime (req, res, next) {
+	log.info('Fetching %s%s...', req.modelName,
+						req.id ? format(' (%s)', req.id) : '');
 
+	var time = new Date();
 	res.on('finish', function () {
-		console.timeEnd(timeStr);
+		log.info('Total:', new Date() - time, 'ms');
+		stream.write('\n');
 	});
 
 	next();
-});
+}
+
+app.use('/:model/:id', measureTime);
 
 app.get('/:model/:id', function (req, res, next) {
 	req.findQuery = req.model.findById(req.id);
 	next();
 }, route);
+
+app.use('/:model', measureTime);
 
 app.get('/:model', function (req, res, next) {
 	req.findQuery = req.model.find();
@@ -100,5 +113,6 @@ app.get('/:model', function (req, res, next) {
 db.connect().then(function () {
 	app.listen(port, ip, function () {
 		log.info('Listening on %s:%d...', ip, port);
+		stream.write('\n');
 	});
 });

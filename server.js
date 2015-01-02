@@ -52,7 +52,7 @@ function route (req, res, next) {
 	req.findQuery.select(select).setOptions(req.model.queryOptions()).exec()
 		// docs exist
 		.then(function (docs) {
-			if (!docs || _.isEmpty(docs)) {
+			if (!docs) {
 				notFound(res);
 				throw new Error('not found');
 			}

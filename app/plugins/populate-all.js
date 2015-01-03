@@ -29,7 +29,7 @@ module.exports = function (schema) {
 				object[key] = undefined; // if object is mongoose doc
 				delete object[key]; // if object is lean
 			}
-		})
+		});
 		return object;
 	}
 
@@ -78,14 +78,14 @@ module.exports = function (schema) {
 
 		// push if not already in array
 		// this operation is -very- slow!
-		if (doc[idKey] && !_.some(root[key], { _id: doc[idKey] }) && 
+		if (doc[idKey] && !_.some(root[key], { _id: doc[idKey] }) &&
 			!_.some(root[key], { id: doc[idKey] })) {
 			model.middleware(doc);
 			root[key].push(doc);
 		}
 
 		return populated;
-	}
+	};
 
 	/**
 	 * Populates the given document(s) recursively. Turn on population
@@ -131,7 +131,7 @@ module.exports = function (schema) {
 		function send (docs) {
 			// attach populated paths to root, if sideload
 			if (!endpoint && sideload) {
-				var res = _.isArray(docs) ? 
+				var res = _.isArray(docs) ?
 					docs.map(function (doc) {
 						return model.attach(doc, root);
 					}) : model.attach(docs, root);
@@ -184,7 +184,7 @@ module.exports = function (schema) {
 			// map the recursive paths to populate before it is set to id.
 			recursePaths = _.mapValues(recursePaths, function (pathType, path) {
 				// recursively search for more fields to populate
-				return pathType.model.populateAll(doc[path], 
+				return pathType.model.populateAll(doc[path],
 					pathType.populate === 'sideload', root, models);
 			});
 

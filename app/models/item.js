@@ -23,7 +23,7 @@ function AbstractSchema () {
 	this.options.collection = 'items';
 	this.options.discriminatorKey = 'type';
 
-	// overwrite selection to delete index, 
+	// overwrite selection to delete index,
 	this.options.select = '-__v -createdAt -updatedAt -index -grade';
 	this.options.wrapPolymorphic = true;
 

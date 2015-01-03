@@ -1,7 +1,7 @@
 var _ = require('lodash');
 
 module.exports = function (schema) {
-	
+
 	/**
 	 * Returns the paths to populate for this model. Populate a path
 	 * by setting `populate: 'sideload' | 'embed'`.
@@ -40,8 +40,8 @@ module.exports = function (schema) {
 
 	schema.statics.queryOptions = function () {
 		// query options - http://mongoosejs.com/docs/api.html#query_Query-setOptions
-		return _.pick(this.schema.options, 'tailable', 'sort', 'limit', 'skip', 
-			'maxscan', 'batchSize', 'comment', 'snapshot', 'hint', 'slaveOk', 
+		return _.pick(this.schema.options, 'tailable', 'sort', 'limit', 'skip',
+			'maxscan', 'batchSize', 'comment', 'snapshot', 'hint', 'slaveOk',
 			'lean', 'safe');
 	};
 };

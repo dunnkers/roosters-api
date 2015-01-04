@@ -3,8 +3,8 @@ var ItemSchema = require('../item'),
 	relationship = require('mongoose-relationship');
 
 var Schema = new ItemSchema({
-	firstName: String,
-	lastName: String,
+	firstName: { type: String, searchable: true },
+	lastName: { type: String, searchable: true },
 	grade: { type: String, ref: 'Grade' },
 	group: { type: String, ref: 'Group', childPath: 'students' },
 	clusters: [ { type: String, ref: 'Cluster' } ]

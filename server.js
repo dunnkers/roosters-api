@@ -48,8 +48,7 @@ function route (req, res, next) {
 	var select = req.model.schema.options.select || '',
 			time = new Date();
 
-
-	req.findQuery.select(select).setOptions(req.model.queryOptions()).exec()
+	req.findQuery.select(select).exec()
 		// docs exist
 		.then(function (docs) {
 			if (!docs) {
@@ -84,8 +83,9 @@ function route (req, res, next) {
 }
 
 function measureTime (req, res, next) {
-	log.info('Fetching %s%s...', req.modelName,
-						req.id ? format(' (%s)', req.id) : '');
+	log.info('Fetching %s%s%s...', req.modelName,
+						req.id ? format(' (%s)', req.id) : '',
+						req.query.q ? format(' (like "%s")', req.query.q) : '');
 
 	var time = new Date();
 	res.on('finish', function () {
@@ -100,13 +100,24 @@ app.use('/:model/:id', measureTime);
 
 app.get('/:model/:id', function (req, res, next) {
 	req.findQuery = req.model.findById(req.id);
+	req.findQuery.setOptions(req.model.queryOptions());
 	next();
 }, route);
 
 app.use('/:model', measureTime);
 
 app.get('/:model', function (req, res, next) {
-	req.findQuery = req.model.find();
+	req.findQuery = req.model.find(req.model.searchQuery(req.query.q));
+
+	var queryOptions = req.model.queryOptions(),
+			limit = Number(req.query.limit);
+
+	if (limit) {
+		queryOptions.limit = limit;
+	}
+
+	req.findQuery.setOptions(queryOptions);
+
 	next();
 }, route);
 

@@ -2,7 +2,7 @@ var ItemSchema = require('../item'),
 	Item = require('mongoose').model('Item');
 
 var Schema = new ItemSchema({
-	name: String
+	name: { type: String, searchable: true },
 });
 
 Schema.virtual('content').set(function (content) {

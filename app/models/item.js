@@ -10,7 +10,7 @@ function AbstractSchema () {
 	Schema.apply(this, arguments);
 
 	this.add({
-		_id: String,
+		_id: { type: String, searchable: true },
 		index: { type: Number, required: true },
 		schedule: {
 			type: Schema.Types.ObjectId,

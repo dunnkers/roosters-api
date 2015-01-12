@@ -4,7 +4,7 @@ var ItemSchema = require('../item'),
 
 var Schema = new ItemSchema({
 	grade: { type: String, ref: 'Grade', childPath: 'groups' },
-	students: [{ type: String, ref: 'Student' }]
+	students: [{ type: String, ref: 'Student', populate: 'sideload' }]
 });
 
 Schema.plugin(relationship, {

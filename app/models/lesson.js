@@ -37,11 +37,11 @@ function AbstractSchema () {
 		reserved: Boolean,
 
 		// lesson-specific serialization
-		room: { type: String, ref: 'Room', populate: 'sideload' },
-		teacher: { type: String, ref: 'Teacher', populate: 'sideload' },
-		group: { type: String, ref: 'Group', populate: 'sideload' },
+		room: { type: String, ref: 'Room', populate: false },
+		teacher: { type: String, ref: 'Teacher', populate: false },
+		group: { type: String, ref: 'Group', populate: false },
 		subject: String,
-		cluster: { type: String, ref: 'Cluster', populate: 'sideload' },
+		cluster: { type: String, ref: 'Cluster', populate: false },
 
 		// a lesson belongs to multiple schedules (many-to-many)
 		schedules: [ { type: Schema.Types.ObjectId, ref: 'Schedule' } ]
@@ -51,6 +51,7 @@ function AbstractSchema () {
 	this.options.fields = [ 'day', 'index',
 						'empty', 'between', 'reserved',
 						'room', 'teacher', 'subject' ];
+	this.options.select = '-__v -createdAt -updatedAt -schedules';
 
 	// do not send schedules if a cluster or group is defined
 	if (!this.options.toJSON) this.options.toJSON = {};

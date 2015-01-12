@@ -8,7 +8,7 @@ var mongoose = require('mongoose'),
 
 var Schema = new Schema({
 	_id: String,
-	students: [ { type: String, ref: 'Student', childPath: 'clusters' } ],
+	students: [ { type: String, ref: 'Student', childPath: 'clusters', populate: 'sideload' } ],
 	grade: { type: String, ref: 'Grade', childPath: 'clusters' }
 });
 

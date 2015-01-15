@@ -1,7 +1,7 @@
 var mongoose = require('mongoose'),
 	timestamps = require('mongoose-timestamp'),
 	Schema = mongoose.Schema,
-	RSVP = require('RSVP'),
+	RSVP = require('rsvp'),
 	flow = require('../utils/flow-control');
 
 var Schema = new Schema({

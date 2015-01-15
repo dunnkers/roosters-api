@@ -3,7 +3,7 @@ var mongoose = require('mongoose'),
 	relationship = require('mongoose-relationship'),
 	Schema = mongoose.Schema,
 	_ = require('lodash'),
-	RSVP = require('RSVP'),
+	RSVP = require('rsvp'),
 	flow = require('../utils/flow-control');
 
 var Schema = new Schema({

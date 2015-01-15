@@ -80,7 +80,7 @@ db.connect().then(function () {
 	return RSVP.all(models.items.map(function (Item) {
 		var ItemLesson = models[Item.modelName + 'Lesson'];
 
-		return Item.find({ _id: { $in: [ "Logr", "Helg", "Vosd", "10971", "Lafh", "TV6c", "327", "11051" ] } }).exec()
+		return Item.find().exec()
 		.then(function (items) {
 			// items = [Student|...]
 			// execute http requests with a max concurrency of 5

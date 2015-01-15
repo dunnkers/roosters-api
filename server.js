@@ -4,7 +4,7 @@ var format = require('util').format,
 	log4js = require('log4js'),
 	log = log4js.getLogger('server'),
 	_ = require('lodash'),
-	RSVP = require('RSVP'),
+	RSVP = require('rsvp'),
 	utils = require('mongoose/lib/utils'),
 	stream = process.stdout;
 

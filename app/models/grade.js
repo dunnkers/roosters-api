@@ -9,12 +9,12 @@ var Schema = new Schema({
 	groups: [{
 		type: String,
 		ref: 'Group',
-		populate: 'sideload'
+		populate: false
 	}],
 	clusters: [{
 		type: String,
 		ref: 'Cluster',
-		populate: 'sideload'
+		populate: false
 	}]
 });
 

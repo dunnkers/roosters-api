@@ -4,7 +4,8 @@ var util = require('util'),
 	timestamps = require('mongoose-timestamp'),
 	Schema = mongoose.Schema,
 	RSVP = require('rsvp'),
-	_ = require('lodash');
+	_ = require('lodash'),
+	flow = require('../utils/flow-control');
 
 // ember-runtime string.js w - http://bit.ly/1krJteU
 function w (str) {
@@ -42,6 +43,8 @@ function AbstractSchema () {
 		group: { type: String, ref: 'Group', populate: false },
 		subject: String,
 		cluster: { type: String, ref: 'Cluster', populate: false },
+
+		audience: { type: String, ref: 'Audience' },
 
 		// a lesson belongs to multiple schedules (many-to-many)
 		schedules: [ { type: Schema.Types.ObjectId, ref: 'Schedule' } ]
@@ -155,6 +158,41 @@ function AbstractSchema () {
 				});
 			});
 			return result;
+		});
+	};
+
+	this.statics.aggregateAudience = function () {
+		var Schedule = this.model('Schedule'),
+				Item = this.model('Item'),
+				Audience = this.model('Audience');
+
+		var ne = { $exists: false },
+				query = { cluster: ne, group: ne };
+
+		return this.find(query).exec().then(function (lessons) {
+			// ABSTRACT AWAY THIS FROM CLUSTER AGGR. LOGIC!
+			// THIS IS COPY!!!
+			// populate schedules
+			return Schedule.populate(lessons, { path: 'schedules', select: 'items' });
+		}).then(function (lessons) {
+			// populate items
+			return RSVP.all(lessons.map(function (lesson) {
+				var items = _.flatten(_.pluck(lesson.schedules, 'items'));
+
+				var audience = new Audience({
+					items: items
+				});
+
+				return Audience.upsert(audience).then(function (result) {
+					lesson.audience = result.product._id;
+
+					return lesson;
+				});
+			}));
+		}).then(function (lessons) {
+			return flow.asyncMap(lessons, function (lesson) {
+				return lesson.promisedSave();
+			});
 		});
 	};
 }

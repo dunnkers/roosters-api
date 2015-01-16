@@ -17,8 +17,8 @@ else if (process.env.CRED_FILE) {
 	var creds = JSON.parse(fs.readFileSync(process.env.CRED_FILE));
 	console.error('cred file parsed:',creds);
 
-	db_url = creds.CLOUDCONTROL_MONGODB_DB_URL;
-	db_name = creds.CLOUDCONTROL_MONGODB_DATABASE;
+	db_url = creds.CONFIG.CONFIG_VARS.CLOUDCONTROL_MONGODB_DB_URL;
+	db_name = creds.CONFIG.CONFIG_VARS.CLOUDCONTROL_MONGODB_DATABASE;
 }
 
 exports.db = {

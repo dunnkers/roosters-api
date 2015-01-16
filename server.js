@@ -128,4 +128,8 @@ db.connect().then(function () {
 		log.info('Listening on port %s...', port);
 		stream.write('\n');
 	});
+}, function (err) {
+	log.error('Failed to connect to database! -', err);
+
+	db.close();
 });

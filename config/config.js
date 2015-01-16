@@ -15,10 +15,10 @@ else if (process.env.CRED_FILE) {
 	// https://www.cloudcontrol.com/dev-center/Guides/NodeJS/Add-on%20credentials
 	console.error('opening cred file...');
 	var creds = JSON.parse(fs.readFileSync(process.env.CRED_FILE));
-	console.error('cred file parsed:',creds);
 
 	db_url = creds.CONFIG.CONFIG_VARS.CLOUDCONTROL_MONGODB_DB_URL;
 	db_name = creds.CONFIG.CONFIG_VARS.CLOUDCONTROL_MONGODB_DATABASE;
+	console.error('cred file parsed. connStr=', db_url + db_name);
 }
 
 exports.db = {

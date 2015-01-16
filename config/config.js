@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 // database
 var db_url = 'mongodb://localhost/',
 	db_name = 'roosters';
@@ -11,8 +13,9 @@ if (process.env.OPENSHIFT_APP_NAME) {
 // cloud control deployment
 else if (process.env.CRED_FILE) {
 	// https://www.cloudcontrol.com/dev-center/Guides/NodeJS/Add-on%20credentials
-	var fs = require('fs'),
-		creds = JSON.parse(fs.readFileSync(process.env.CRED_FILE));
+	console.error('opening cred file...');
+	var creds = JSON.parse(fs.readFileSync(process.env.CRED_FILE));
+	console.error('cred file parsed:',creds);
 
 	db_url = creds.CLOUDCONTROL_MONGODB_DB_URL;
 	db_name = creds.CLOUDCONTROL_MONGODB_DATABASE;

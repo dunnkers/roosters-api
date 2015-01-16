@@ -120,7 +120,10 @@ app.get('/:model', function (req, res, next) {
 	next();
 }, route);
 
+console.error('Hello cloudControl.');
+log.error('Connecting to database...');
 db.connect().then(function () {
+	log.error('Connected to database, setting up server...');
 	app.listen(port, function () {
 		log.info('Listening on port %s...', port);
 		stream.write('\n');

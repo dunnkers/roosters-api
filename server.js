@@ -11,8 +11,7 @@ var format = require('util').format,
 var db = require('./app/connection'),
 	collections = require('./app/initializers/collections');
 
-var ip = process.env.DOMAIN || "127.0.0.1",
-	port = process.env.PORT || 5000;
+var port = process.env.PORT || 5000;
 
 app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
@@ -122,8 +121,8 @@ app.get('/:model', function (req, res, next) {
 }, route);
 
 db.connect().then(function () {
-	app.listen(port, ip, function () {
-		log.info('Listening on %s:%d...', ip, port);
+	app.listen(port, function () {
+		log.info('Listening on port %s...', port);
 		stream.write('\n');
 	});
 });

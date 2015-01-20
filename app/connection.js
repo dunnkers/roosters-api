@@ -9,7 +9,7 @@ var db = mongoose.connection;
 
 db.connect = function () {
 	return new RSVP.Promise(function (resolve, reject) {
-		mongoose.connect(config.db.connStr);
+		mongoose.connect(config.db_connStr);
 
 		db.on('error', reject);
 

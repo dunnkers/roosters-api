@@ -9,10 +9,8 @@ var format = require('util').format,
 	stream = process.stdout;
 
 var db = require('./app/connection'),
-	collections = require('./app/initializers/collections');
-
-var ip = process.env.DOMAIN || "127.0.0.1",
-	port = process.env.PORT || 5000;
+	collections = require('./app/initializers/collections'),
+	config = require('./config/config');
 
 app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
@@ -122,8 +120,12 @@ app.get('/:model', function (req, res, next) {
 }, route);
 
 db.connect().then(function () {
-	app.listen(port, ip, function () {
-		log.info('Listening on %s:%d...', ip, port);
+	app.listen(config.port, config.ip, function () {
+		log.info('Listening on %s:%d...', config.ip, config.port);
 		stream.write('\n');
 	});
+}, function (err) {
+	log.error('Failed to connect to database! -', err);
+
+	db.close();
 });

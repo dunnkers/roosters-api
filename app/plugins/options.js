@@ -23,9 +23,9 @@ module.exports = function (schema) {
 			delete ret._id;
 		}
 
-		// remove empty values and arrays
+		// remove falsy-, empty values and arrays
 		_.forIn(ret, function (value, key) {
-			if ((_.isArray(value) || _.isString(value)) && _.isEmpty(value)) {
+			if ((_.isArray(value) || _.isString(value)) && _.isEmpty(value) || value === false) {
 				ret[key] = undefined;
 				delete ret[key];
 			}

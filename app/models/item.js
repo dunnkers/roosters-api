@@ -24,7 +24,7 @@ function AbstractSchema () {
 	this.options.discriminatorKey = 'type';
 
 	// overwrite selection to delete index,
-	this.options.select = '-__v -createdAt -updatedAt -index -grade';
+	this.options.select = '-__v -createdAt -updatedAt -index -grade -clusters';
 	this.options.wrapPolymorphic = true;
 
 	// createdAt and updatedAt properties

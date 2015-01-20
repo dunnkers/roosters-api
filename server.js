@@ -1,11 +1,7 @@
 var format = require('util').format,
 	express = require('express'),
 	app = express(),
-	log4js = require('log4js'),
-	log = log4js.getLogger('server'),
-	_ = require('lodash'),
-	RSVP = require('rsvp'),
-	utils = require('mongoose/lib/utils'),
+	log = require('./app/utils/logger')('server'),
 	stream = process.stdout;
 
 var db = require('./app/connection'),

@@ -1,7 +1,6 @@
 var RSVP = require('rsvp'),
 	async = require('async'),
-	log4js = require('log4js'),
-	log = log4js.getLogger('flow');
+	log = require('./logger')('flow');
 
 /**
  * Promised async mapping. Supports limited parallel and
@@ -25,7 +24,7 @@ exports.asyncMap = function (arr, promise, limit) {
 			resolve(results);
 		});
 	});
-}
+};
 
 /**
  * Waits for the queue to drain if it hasn't finished yet,
@@ -45,4 +44,4 @@ exports.drain = function (queue) {
 			resolve();
 		}
 	});
-}
+};

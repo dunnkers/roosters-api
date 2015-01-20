@@ -1,8 +1,7 @@
 var RSVP = require('rsvp'),
 	_ = require('lodash'),
 	async = require('async'),
-	log4js = require('log4js'),
-	log = log4js.getLogger('update'),
+	log = require('./app/utils/logger')('update'),
 	stream = process.stdout;
 
 // scraper, connection and models

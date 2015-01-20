@@ -1,7 +1,6 @@
 var mongoose = require('mongoose'),
 	RSVP = require('rsvp'),
-	log4js = require('log4js'),
-	log = log4js.getLogger('connection'),
+	log = require('./utils/logger')('connection'),
 	stream = process.stdout;
 
 var config = require('../config/config');

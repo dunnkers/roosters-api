@@ -2,7 +2,7 @@
 var env = process.env.CRED_FILE ? require(process.env.CRED_FILE).CONFIG.CONFIG_VARS : process.env;
 
 // environment
-exports.production = env[env.ROOSTERS_MONGODB_DB_URL_VAR] || env[env.ROOSTERS_PORT_VAR];
+exports.production = env[env.ROOSTERS_MONGODB_DB_URL_VAR] || env[env.ROOSTERS_PORT_VAR] ? true : false;
 
 // database
 exports.db_url = env[env.ROOSTERS_MONGODB_DB_URL_VAR] || 'mongodb://localhost/';

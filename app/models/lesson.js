@@ -177,7 +177,7 @@ function AbstractSchema () {
 		}).then(function (lessons) {
 			// populate items
 			return RSVP.all(lessons.map(function (lesson) {
-				var items = _.flatten(_.pluck(lesson.schedules, 'items'));
+				var items = _.uniq(_.flatten(_.pluck(lesson.schedules, 'items')));
 
 				var audience = new Audience({
 					items: items

@@ -2,12 +2,12 @@ var _ = require('lodash');
 
 module.exports = function (schema) {
 
-  function escapeRegExp (str){
+  function escapeRegExp (str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
   schema.statics.filterPaths = function (properties) {
-    return _.pick(this.schema.paths, function (pathType, path) {
+    var filteredPaths = _.pick(this.schema.paths, function (pathType, path) {
       var options = pathType.options;
 
       // for path arrays
@@ -22,6 +22,11 @@ module.exports = function (schema) {
       });
 
       return validate;
+    });
+
+    // only return pathType.options. The rest is redundant
+    return _.transform(filteredPaths, function (res, pathType, path) {
+      res[path] = pathType.options;
     });
   };
 

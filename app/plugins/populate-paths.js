@@ -9,33 +9,16 @@ module.exports = function (schema) {
 	 * @return {Object}  An object with the paths.
 	 */
 	schema.statics.populatePaths = function () {
-		var model = this;
-
-		return _.transform(_.pick(model.schema.paths, function (pathType, path) {
-			var options = pathType.options;
-
-			// for path arrays
-			if (options.type && _.isArray(options.type)) {
-				options = _.first(options.type);
-				pathType.options = options;
-			}
-
-			// path should have ref and populate property
-			if (!(options.ref && options.populate)) return false;
-
-			var pathModel = model.model(options.ref);
-			options.model = pathModel;
+		// get only paths where (populate: true)
+		return _.forEach(this.filterPaths([ 'ref', 'populate' ]), function (opt, path) {
+			// set reference model
+			opt.model = this.model(opt.ref);
 
 			// include query options set on schema options.
-			options.options = _.pick(pathModel.schema.options, 'select', 'match');
-			options.options.path = path;
-			options.options.options = pathModel.queryOptions();
-
-			return true;
-		}), function (res, pathType, path) {
-			// only return options since we only need those.
-			res[path] = pathType.options;
-		});
+			opt.options = _.pick(opt.model.schema.options, 'select', 'match');
+			opt.options.path = path;
+			opt.options.options = opt.model.queryOptions();
+		}, this);
 	};
 
 	schema.statics.queryOptions = function () {

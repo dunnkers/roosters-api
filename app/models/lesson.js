@@ -126,6 +126,13 @@ function AbstractSchema () {
 					}));
 				});
 
+				// set subject if only one property left
+				if (_.keys(lesson.content).length === 1) {
+					found.subject = _.first(_.values(lesson.content));
+
+					delete lesson.content;
+				}
+
 				/* VALIDATE */
 				// meeting. e.g. `Inv`, `Acht1` or `team1` lessons.
 				var meeting = found.teacher && !(found.group || found.cluster);
